@@ -1,4 +1,4 @@
-module Stepladder
+module Shifty
   module Roster
     class << self
       def [](gang)

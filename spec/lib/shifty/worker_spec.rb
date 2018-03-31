@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-module Stepladder
+module Shifty
   describe Worker do
     it { should respond_to(:shift, :supply, :supply=, :"|") }
 

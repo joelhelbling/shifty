@@ -1,9 +1,9 @@
-[![Gem Version](https://badge.fury.io/rb/stepladder.svg)](https://badge.fury.io/rb/stepladder)
-[![Build Status](https://travis-ci.org/joelhelbling/stepladder.png)](https://travis-ci.org/joelhelbling/stepladder)
-[![Maintainability](https://api.codeclimate.com/v1/badges/950ded888350c1124348/maintainability)](https://codeclimate.com/github/joelhelbling/stepladder/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/950ded888350c1124348/test_coverage)](https://codeclimate.com/github/joelhelbling/stepladder/test_coverage)
+[![Gem Version](https://badge.fury.io/rb/shifty.svg)](https://badge.fury.io/rb/shifty)
+[![Build Status](https://travis-ci.org/joelhelbling/shifty.png)](https://travis-ci.org/joelhelbling/shifty)
+[![Maintainability](https://api.codeclimate.com/v1/badges/950ded888350c1124348/maintainability)](https://codeclimate.com/github/joelhelbling/shifty/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/950ded888350c1124348/test_coverage)](https://codeclimate.com/github/joelhelbling/shifty/test_coverage)
 
-# The Stepladder Framework
+# The Shifty Framework
 
 _"How many Ruby fibers does it take to screw in a lightbulb?"_
 
@@ -12,7 +12,7 @@ _"How many Ruby fibers does it take to screw in a lightbulb?"_
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'stepladder'
+gem 'shifty'
 ```
 
 And then execute:
@@ -26,23 +26,23 @@ Or install it yourself:
 And then use it:
 
 ```ruby
-require 'stepladder'
+require 'shifty'
 ```
 
-## New!  Stepladders now has a DSL!
+## Shifty DSL
 
-As of version 0.2.0 there is now a DSL which provides convenient shorthand
-for several common types of workers.  Let's look at them.
+The DSL provides convenient shorthand for several common types of
+workers.  Let's look at them.
 
 But first, be sure to include the DSL mixin:
 
 ```ruby
-include Stepladder::DSL
+include Shifty::DSL
 ```
 
 ### Source Worker
 
-At the headwater of every Stepladder pipeline, there is a source worker
+At the headwater of every Shifty pipeline, there is a source worker
 which is able to generate its own work items.
 
 Here is possibly the simplest of source workers, which provides the same
@@ -90,7 +90,7 @@ w1.shift == w2.shift #=> nil (and henceforth, etc.)
 
 ### Relay Worker
 
-This is perhaps the most "normal" kind of worker in Stepladder.  It
+This is perhaps the most "normal" kind of worker in Shifty.  It
 accepts a value and returns some transformation of that value:
 
 ```ruby
@@ -342,15 +342,14 @@ Note that as soon as a nil is received from the supplying queue, the trailing
 worker simply provides a nil.
 
 
-## Origins of Stepladder
+## Origins of Shifty
 
-Stepladder grew out of experimentation with Ruby fibers, after readings
-[Dave Thomas' demo of Ruby fibers](http://pragdave.me/blog/2007/12/30/pipelines-using-fibers-in-ruby-19/), wherein he created a
-pipeline of fiber processes, emulating the style and syntax of the
-\*nix command line.  I noticed that, courtesy of fibers' extremely
-low surface area, fiber-to-fiber collaborators could operate with
-extremely low coupling.  That was the original motivation for creating
-the framework.
+Shifty was Shifty, which grew out of experimentation with Ruby fibers, after reading
+[Dave Thomas' demo of Ruby fibers](http://pragdave.me/blog/2007/12/30/pipelines-using-fibers-in-ruby-19/),
+wherein he created a pipeline of fiber processes, emulating the style and syntax of the
+\*nix command line.  I noticed that, courtesy of fibers' extremely low surface area,
+fiber-to-fiber collaborators could operate with extremely low coupling.  That was the
+original motivation for creating the framework.
 
 After playing around with the new framework a bit, I began to notice
 other interesting characteristics of this paradigm.
@@ -369,7 +368,7 @@ cleaned up or rolled back)?  It would be far less messy and far more
 expedient if each item could be processed though all operations before
 the next one is begun.
 
-This is the design paradigm which stepladder makes easy.  Although all
+This is the design paradigm which shifty makes easy.  Although all
 the workers in your assembly line can be coded in the same context (which
 is one of the big selling points of the daisy-chaining of enumerable
 methods,incidentally), you also get the advantage of passing each item
@@ -377,9 +376,9 @@ though the entire op-chain before starting the next.
 
 ### Think Locally, Act Globally
 
-Because stepladder workers use fibers as their basic API, the are almost
+Because shifty workers use fibers as their basic API, the are almost
 unaware of the outside world.  And they can pretty much be written as such.
-At the heart of each Stepladder worker is a task which you provide, which
+At the heart of each Shifty worker is a task which you provide, which
 is a callable ruby object (such as a Proc or a lambda).
 
 The scope of the work is whatever scope existed in the task when you
@@ -391,7 +390,7 @@ the appropriate point in the loop.
 For example:
 
 ```ruby
-realestate_maker = Stepladder::Worker.new do
+realestate_maker = Shifty::Worker.new do
   oceans = %w[Atlantic Pacific Indiana Arctic]
   previous_ocean = "Atlantic"
   while current_ocean = oceans.sample
@@ -420,7 +419,7 @@ Consider the following ~~code~~ vaporware:
 ```ruby
 SUBJECT = 'kitteh'
 
-include Stepladder::DSL
+include Shifty::DSL
 
 tweet_getter = source_worker do
   twitter_api.fetch_my_tweets
@@ -451,10 +450,10 @@ objects they're handing off and receiving.  But we have the capability to
 coordinate those workers in a centralized location (such as in this code
 example).
 
-## Stepladder::Worker
+## Shifty::Worker
 
-The Stepladder::Worker documentation has been moved
-[here](docs/stepladder/worker.md).
+The Shifty::Worker documentation (which was the old README) is now
+[here](docs/shifty/worker.md).
 
 ## Roadmap
 

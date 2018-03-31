@@ -1,6 +1,6 @@
 require 'ostruct'
 
-module Stepladder
+module Shifty
   class Worker
     attr_reader :supply
 
