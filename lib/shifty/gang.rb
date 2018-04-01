@@ -1,6 +1,6 @@
-require 'stepladder/roster'
+require 'shifty/roster'
 
-module Stepladder
+module Shifty
   class Gang
     attr_accessor :workers
 

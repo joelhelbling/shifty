@@ -1,4 +1,4 @@
-module Stepladder
+module Shifty
   class WorkerInitializationError < StandardError; end
 
   module DSL

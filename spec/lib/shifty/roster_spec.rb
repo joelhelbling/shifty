@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-module Stepladder
+module Shifty
   describe Roster do
     include DSL
 

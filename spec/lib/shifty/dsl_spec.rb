@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-module Stepladder
+module Shifty
   describe DSL do
     include described_class
 
