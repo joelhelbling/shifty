@@ -1,84 +1,61 @@
 module Shifty
   RSpec.describe Worker do
-    it { should respond_to(:shift, :supply, :supply=, :"|") }
+    context '#respond_to?' do
+      Then { expect(subject).to respond_to(:shift, :supply, :supply=, :"|") }
+    end
 
     describe "readiness" do
       context "with no supply" do
         context "with no task" do
-          it { should_not be_ready_to_work }
+          Given(:worker) { Worker.new }
+          Then { expect(worker).to_not be_ready_to_work }
         end
+
         context "with a task which accepts a value" do
-          subject do
-            Worker.new { |value| value.to_s }
-          end
-          it { should_not be_ready_to_work }
+          Given(:worker) { Worker.new { |value| value.to_s } }
+          Then { expect(worker).to_not be_ready_to_work }
         end
+
         context "with a task which doesn't accept a value" do
-          subject do
-            Worker.new { "foo" }
-          end
-          it { should be_ready_to_work }
+          Given(:worker) { Worker.new { "foo" } }
+          Then { expect(worker).to be_ready_to_work }
         end
       end
 
       context "with a supply" do
-        context "with no task" do
-          subject { Worker.new }
-          it { should_not be_ready_to_work }
-        end
-        context "with a task which accepts a value" do
-          before do
-            subject.supply = Worker.new { "foofoo" }
-          end
-          subject do
-            Worker.new { |value| value.upcase }
-          end
-          it { should be_ready_to_work }
-        end
-        context "with a task which doesn't accept a value" do
-          subject do
-            Worker.new { "bar" }
-          end
-          it { should be_ready_to_work }
+        context "when the task accepts a value" do
+          Given(:supplier) { Worker.new { "foofoo" } }
+          Given(:worker) { Worker.new { |value| value.upcase } }
+          Given { worker.supply = supplier }
+
+          Then { expect(worker).to be_ready_to_work }
         end
       end
     end
 
     describe "can accept a task" do
-      Given(:result) { double :copasetic? => true }
-
       context "via the constructor" do
-
         context "as a block passed to ::new" do
-          Given(:subject) do
-            Worker.new do
-              result
-            end
-          end
+          Given(:worker) { Worker.new { :foo } }
 
-          Then { expect(subject.shift).to be_copasetic }
+          Then { worker.shift == :foo }
         end
 
         context "as {:task => <proc/lambda>} passed to ::new" do
-          Given(:callable_task) { Proc.new { result } }
+          Given(:callable_task) { Proc.new { :bar } }
+          Given(:worker) { Worker.new task: callable_task }
 
-          Given(:subject) do
-            Worker.new task: callable_task
-          end
-
-          Then { expect(subject.shift).to be_copasetic }
+          Then { worker.shift == :bar }
         end
       end
 
       context "However, when a worker's task accepts an argument," do
         context "but the worker has no supply," do
-          subject { Worker.new { |value| value.do_whatnot } }
-          specify "#shift throws an exception" do
-            expect { subject.shift }.to raise_error(/has no supply/)
-          end
+          Given(:worker) { Worker.new { |value| value.do_whatnot } }
+
+          Then { expect { subject.shift }.to raise_error(/has no supply/) }
         end
       end
-
     end
 
     describe '#suppliable?' do
@@ -86,6 +63,7 @@ module Shifty
         Given(:worker) { Worker.new { :foo } }
         Then { expect(worker).to_not be_suppliable }
       end
+
       context 'non-source worker' do
         Given(:worker) { Worker.new { |v| v +=1 } }
         Then { expect(worker).to be_suppliable }
@@ -97,48 +75,6 @@ module Shifty
         Given(:source1) { Worker.new { :foo } }
         Given(:source2) { Worker.new { :bar } }
         Then { expect { source1.supply = source2 }.to raise_error(/cannot accept a supply/) }
-      end
-    end
-
-    describe "= EXAMPLE WORKER TYPES =" do
-
-      let(:source_worker) do
-        Worker.new do
-          numbers = (1..3).to_a
-          while value = numbers.shift
-            Fiber.yield value
-          end
-        end
-      end
-
-      let(:relay_worker) do
-        Worker.new do |number|
-          number && number * 3
-        end
-      end
-
-      describe "The Source Worker" do
-        Given(:the_self_starter) { source_worker }
-
-        context "generates values without a supply." do
-          Then { the_self_starter.shift == 1 }
-          And  { the_self_starter.shift == 2 }
-          And  { the_self_starter.shift == 3 }
-          And  { the_self_starter.shift.nil? }
-        end
-      end
-
-      describe "The Relay Worker" do
-        Given { relay_worker.supply = source_worker }
-
-        Given(:triplizer) { relay_worker }
-
-        context "operates on values received from its supply." do
-          Then { triplizer.shift == 3 }
-          And  { triplizer.shift == 6 }
-          And  { triplizer.shift == 9 }
-          And  { triplizer.shift.nil? }
-        end
       end
     end
 
@@ -219,8 +155,6 @@ module Shifty
           And  { pipeline.shift.nil? }
         end
       end
-
     end
-
   end
 end
