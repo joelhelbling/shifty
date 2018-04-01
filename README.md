@@ -21,7 +21,7 @@ And then execute:
 
 Or install it yourself:
 
-    $ gem install steplader
+    $ gem install shifty
 
 And then use it:
 
@@ -344,7 +344,7 @@ worker simply provides a nil.
 
 ## Origins of Shifty
 
-Shifty was Shifty, which grew out of experimentation with Ruby fibers, after reading
+Shifty was [Stepladder](https://github.com/joelhelbling/stepladder), which grew out of experimentation with Ruby fibers, after reading
 [Dave Thomas' demo of Ruby fibers](http://pragdave.me/blog/2007/12/30/pipelines-using-fibers-in-ruby-19/),
 wherein he created a pipeline of fiber processes, emulating the style and syntax of the
 \*nix command line.  I noticed that, courtesy of fibers' extremely low surface area,
