@@ -1,7 +1,5 @@
-require 'spec_helper'
-
 module Shifty
-  describe Gang do
+  RSpec.describe Gang do
     include DSL
 
     Given(:source) { source_worker (:a..:z).map(&:to_s) }

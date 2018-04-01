@@ -1,7 +1,5 @@
-require 'spec_helper'
-
 module Shifty
-  describe Worker do
+  RSpec.describe Worker do
     it { should respond_to(:shift, :supply, :supply=, :"|") }
 
     describe "readiness" do
@@ -47,31 +45,28 @@ module Shifty
     end
 
     describe "can accept a task" do
-      let(:result) { double }
-      before do
-        result.stub(:copasetic?).and_return(true)
-      end
+      Given(:result) { double :copasetic? => true }
 
       context "via the constructor" do
 
         context "as a block passed to ::new" do
-          subject do
+          Given(:subject) do
             Worker.new do
               result
             end
           end
 
-          its(:shift) { should be_copasetic }
+          Then { expect(subject.shift).to be_copasetic }
         end
 
         context "as {:task => <proc/lambda>} passed to ::new" do
-          let(:callable_task) { Proc.new { result } }
+          Given(:callable_task) { Proc.new { result } }
 
-          subject do
+          Given(:subject) do
             Worker.new task: callable_task
           end
 
-          its(:shift) { should be_copasetic }
+          Then { expect(subject.shift).to be_copasetic }
         end
       end
 
@@ -123,28 +118,26 @@ module Shifty
       end
 
       describe "The Source Worker" do
-        subject(:the_self_starter) { source_worker }
+        Given(:the_self_starter) { source_worker }
 
-        it "generates values without a supply." do
-          the_self_starter.shift.should == 1
-          the_self_starter.shift.should == 2
-          the_self_starter.shift.should == 3
-          the_self_starter.shift.should be_nil
+        context "generates values without a supply." do
+          Then { the_self_starter.shift == 1 }
+          And  { the_self_starter.shift == 2 }
+          And  { the_self_starter.shift == 3 }
+          And  { the_self_starter.shift.nil? }
         end
       end
 
       describe "The Relay Worker" do
-        before do
-          relay_worker.supply = source_worker
-        end
+        Given { relay_worker.supply = source_worker }
 
-        subject(:triplizer) { relay_worker }
+        Given(:triplizer) { relay_worker }
 
-        it "operates on values received from its supply." do
-          triplizer.shift.should == 3
-          triplizer.shift.should == 6
-          triplizer.shift.should == 9
-          triplizer.shift.should be_nil
+        context "operates on values received from its supply." do
+          Then { triplizer.shift == 3 }
+          And  { triplizer.shift == 6 }
+          And  { triplizer.shift == 9 }
+          And  { triplizer.shift.nil? }
         end
       end
     end
@@ -163,14 +156,16 @@ module Shifty
     describe "#shift" do
       Given(:worker) { Worker.new { |v| v } }
       Given(:work_product) { :whatever }
-      Given { supply.stub(:shift).and_return(work_product) }
+      Given(:supply) { double shift: work_product }
       Given { worker.supply = supply }
-      Given(:supply) { double }
 
       context "resumes a fiber" do
-        Given { Fiber.any_instance.should_receive(:resume).and_return(work_product) }
+        Given(:fake_fiber) { double }
+        Given { allow(Fiber).to receive(:new).and_return(fake_fiber) }
 
-        Then { worker.shift }
+        When { expect(fake_fiber).to receive(:resume).once.and_return(work_product) }
+
+        Then { worker.shift == work_product }
       end
     end
 

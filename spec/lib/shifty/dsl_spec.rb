@@ -1,7 +1,5 @@
-require 'spec_helper'
-
 module Shifty
-  describe DSL do
+  RSpec.describe DSL do
     include described_class
 
     describe '#source_worker' do
