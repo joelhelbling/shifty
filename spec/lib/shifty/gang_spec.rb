@@ -1,7 +1,5 @@
-require 'spec_helper'
-
 module Shifty
-  describe Gang do
+  RSpec.describe Gang do
     include DSL
 
     Given(:source) { source_worker (:a..:z).map(&:to_s) }
@@ -11,9 +9,10 @@ module Shifty
     When(:gang) { described_class.new workers }
 
     context 'covers Worker API' do
-      it do should respond_to :ready_to_work?, :shift,
-                              :supply, :supply=,
-                              :supplies, :"|"
+      Then do
+        expect(subject).to respond_to(:ready_to_work?, :shift,
+                                      :supply, :supply=,
+                                      :supplies, :"|")
       end
     end
 
@@ -77,8 +76,6 @@ module Shifty
 
       Then { gang.shift == 'a+~' }
     end
-
-
   end
 end
 

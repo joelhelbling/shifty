@@ -1,7 +1,5 @@
-require 'spec_helper'
-
 module Shifty
-  describe Roster do
+  RSpec.describe Roster do
     include DSL
 
     Given(:source) { source_worker (:a..:z).map(&:to_s) }
@@ -14,7 +12,9 @@ module Shifty
 
     describe '#responds_to?' do
       Given(:workers) { [] }
-      Then { roster.should respond_to :push, :pop, :shift, :unshift }
+      Then do
+        expect(roster).to respond_to(:push, :pop, :shift, :unshift)
+      end
     end
 
     describe '#push' do
