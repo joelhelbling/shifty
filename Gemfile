@@ -1,9 +1,6 @@
-source 'http://rubygems.org'
+source 'https://rubygems.org'
 
-gem 'rake',        '10.3.2'
-gem 'rspec',       '3.1.0'
-gem 'rspec-core',  '3.1.2'
-gem 'rspec-its',   '1.0.1'
-gem 'rspec-given', '3.8.0'
-gem 'pry'
-gem 'simplecov', require: false, group: :test
+git_source(:github) {|repo_name| 'https://github.com/#{repo_name}' }
+
+# Specify your gem's dependencies in shifty.gemspec
+gemspec
