@@ -114,6 +114,114 @@ module Shifty
       Then { pipeline.shift == source_worker }
     end
 
+    describe ":tags" do
+      context "no  tags" do
+        Given(:worker) { Worker.new }
+
+        Then { worker.tags = [] }
+      end
+
+      context "initialization" do
+        When(:worker) { Worker.new(tags: tag_arg) }
+
+        context "a single tag" do
+          Given(:tag_arg) { :foo }
+          Then { worker.tags == [:foo] }
+        end
+
+        context "multiple tags" do
+          Given(:tag_arg) { [:foo, :bar] }
+          Then { worker.tags == [:foo, :bar] }
+        end
+      end
+
+      context "by assignment" do
+        Given(:worker) { Worker.new }
+
+        When { worker.tags = tag_arg }
+
+        context "a single tag" do
+          Given(:tag_arg) { :foo }
+          Then { worker.tags == [:foo] }
+        end
+
+        context "multiple tags" do
+          Given(:tag_arg) { [:foo, :bar] }
+          Then { worker.tags == [:foo, :bar] }
+        end
+      end
+
+      describe "#has_tag?" do
+        Given(:worker) { Worker.new }
+
+        When { worker.tags = [:foo] }
+
+        Then { expect(worker).to have_tag(:foo) }
+        Then { expect(worker).to_not have_tag(:bar) }
+      end
+    end
+
+    describe ":criteria" do
+      Given(:source_worker) { Worker.new { :foo }  }
+      Given(:worker) { Worker.new(criteria: criteria) { |v| "#{v}_bar".to_sym } }
+
+      When(:pipeline) { source_worker | worker }
+
+      context "when criteria returns true" do
+        Given(:criteria) { Proc.new { true } }
+
+        Then { pipeline.shift == :foo_bar }
+      end
+
+      context "when criteria returns false" do
+        Given(:criteria) { Proc.new { false } }
+
+        Then { pipeline.shift == :foo }
+      end
+
+      context "criteria can interrogate worker" do
+        Given(:criteria) { Proc.new { |w| w.has_tag? :uno } }
+
+        context "passing criteria" do
+          Given { worker.tags = :uno }
+
+          Then { pipeline.shift == :foo_bar }
+        end
+
+        context "failing criteria" do
+          Given { worker.tags = :dos }
+
+          Then { pipeline.shift == :foo }
+        end
+      end
+
+      context "multiple criteria" do
+        Given(:criteria1) { Proc.new { |w| w.has_tag? :uno } }
+        Given(:criteria2) { Proc.new { |w| w.has_tag? :dos } }
+        Given(:criteria) { [criteria1, criteria2] }
+
+        context "passing all criteria" do
+          Given { worker.tags = [:uno, :dos] }
+
+          Then { pipeline.shift == :foo_bar }
+        end
+
+        context "passing some criteria" do
+          Given { worker.tags = [:dos] }
+
+          Then { pipeline.shift == :foo }
+        end
+
+        context "failing all criteria" do
+          Given { worker.tags = [:tres] }
+
+          Then { pipeline.shift == :foo }
+        end
+      end
+
+      # TODO: worker.criteria << &proc
+    end
+
     describe "worker receives a |context|" do
       Given(:source_worker) { Worker.new { :foo } }
 
