@@ -13,7 +13,7 @@ module Shifty
         end
 
         context "with a range" do
-          Given(:worker) { source_worker (0..2) }
+          Given(:worker) { source_worker(0..2) }
 
           Then { worker.shift == 0 }
           And  { worker.shift == 1 }
@@ -127,7 +127,7 @@ module Shifty
 
     describe "#side_worker" do
       context "normal usage" do
-        Given(:source) { source_worker (0..2) }
+        Given(:source) { source_worker(0..2) }
         Given(:side_effect) { [] }
         Given(:worker) do
           side_effect
@@ -183,7 +183,7 @@ module Shifty
 
     describe "#filter_worker" do
       context "normal usage" do
-        Given(:source) { source_worker (1..3) }
+        Given(:source) { source_worker(1..3) }
 
         When { source | filter }
 
@@ -227,7 +227,7 @@ module Shifty
         When { source | worker }
 
         context 'with specified "gathering" batch size' do
-          Given(:source) { source_worker (0..7) }
+          Given(:source) { source_worker(0..7) }
           Given(:worker) do
             batch_worker gathering: 3
           end
@@ -248,7 +248,7 @@ module Shifty
         end
 
         context "collects until condition" do
-          Given(:source) { source_worker (1..5) }
+          Given(:source) { source_worker(1..5) }
           Given(:worker) do
             batch_worker { |n| n % 2 == 0 }
           end
@@ -322,7 +322,7 @@ module Shifty
 
     context "#trailing_worker" do
       context "normal usage" do
-        Given(:source) { source_worker (0..5) }
+        Given(:source) { source_worker(0..5) }
         Given(:worker) { trailing_worker 4 }
 
         When { source | worker }
@@ -334,7 +334,7 @@ module Shifty
       end
 
       context "default trail size" do
-        Given(:source) { source_worker (0..3) }
+        Given(:source) { source_worker(0..3) }
         Given(:worker) { trailing_worker }
 
         When { source | worker }

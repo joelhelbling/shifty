@@ -37,7 +37,7 @@ module Shifty
 
     def link(workers)
       @workers = [workers.shift]
-      while worker = workers.shift
+      while (worker = workers.shift)
         Roster[self] << worker
       end
     end

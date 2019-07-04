@@ -2,7 +2,7 @@ module Shifty
   RSpec.describe Gang do
     include DSL
 
-    Given(:source) { source_worker (:a..:z).map(&:to_s) }
+    Given(:source) { source_worker((:a..:z).map(&:to_s)) }
     Given(:plusser) { relay_worker { |v| v + "+" } }
     Given(:tilda_er) { relay_worker { |v| v + "~" } }
 

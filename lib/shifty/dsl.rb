@@ -146,11 +146,9 @@ module Shifty
       return unless block
       if argument
         ensure_regular_arity(block)
-      else
-        if block.arity > 0
-          throw_with \
-            "Source worker cannot accept any arguments (arity == 0)"
-        end
+      elsif block.arity > 0
+        throw_with \
+          "Source worker cannot accept any arguments (arity == 0)"
       end
     end
 

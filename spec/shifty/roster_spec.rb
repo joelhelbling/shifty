@@ -2,7 +2,7 @@ module Shifty
   RSpec.describe Roster do
     include DSL
 
-    Given(:source) { source_worker (:a..:z).map(&:to_s) }
+    Given(:source) { source_worker((:a..:z).map(&:to_s)) }
     Given(:plusser) { relay_worker { |v| v + "+" } }
     Given(:tilda_er) { relay_worker { |v| v + "~" } }
 
@@ -56,7 +56,7 @@ module Shifty
       end
 
       context "when first worker is a source" do
-        Given(:new_source) { source_worker (:z..:a).map(&:to_s) }
+        Given(:new_source) { source_worker((:z..:a).map(&:to_s)) }
         Given(:workers) { [source, plusser, tilda_er] }
 
         Then { expect { roster.unshift new_source }.to raise_error(/cannot accept a supply/) }

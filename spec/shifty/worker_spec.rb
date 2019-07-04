@@ -65,7 +65,7 @@ module Shifty
       end
 
       context "non-source worker" do
-        Given(:worker) { Worker.new { |v| v += 1 } }
+        Given(:worker) { Worker.new { |v| v + 1 } }
         Then { expect(worker).to be_suppliable }
       end
     end
@@ -135,7 +135,7 @@ module Shifty
         Given(:source_worker) do
           Worker.new do
             numbers = (1..3).to_a
-            while value = numbers.shift
+            while (value = numbers.shift)
               Fiber.yield value
             end
           end
