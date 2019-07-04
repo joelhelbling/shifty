@@ -1,10 +1,10 @@
-require 'ostruct'
+require "ostruct"
 
 module Shifty
   class Worker
     attr_reader :supply
 
-    def initialize(p={}, &block)
+    def initialize(p = {}, &block)
       @supply   = p[:supply]
       @task     = block || p[:task]
       @context  = p[:context] || OpenStruct.new
@@ -28,7 +28,7 @@ module Shifty
       subscribing_party.supply = self
       subscribing_party
     end
-    alias_method :"|", :supplies
+    alias | supplies
 
     def supply=(supplier)
       raise WorkerError.new("Worker is a source, and cannot accept a supply") unless suppliable?
@@ -50,16 +50,16 @@ module Shifty
     end
 
     def workflow
-      @my_little_machine ||= Fiber.new do
+      @my_little_machine ||= Fiber.new {
         loop do
-          value = supply && supply.shift
+          value = supply&.shift
           Fiber.yield @task.call(value, supply, @context)
         end
-      end
+      }
     end
 
     def default_task
-      Proc.new { |value| value }
+      proc { |value| value }
     end
 
     def task_accepts_a_value?
@@ -67,13 +67,12 @@ module Shifty
     end
 
     def task_method_exists?
-      self.methods.include? :task
+      methods.include? :task
     end
 
     def task_method_accepts_a_value?
-      self.method(:task).arity > 0
+      method(:task).arity > 0
     end
-
   end
 
   class WorkerError < StandardError; end

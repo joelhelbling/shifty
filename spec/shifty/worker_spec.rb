@@ -1,6 +1,6 @@
 module Shifty
   RSpec.describe Worker do
-    context '#respond_to?' do
+    context "#respond_to?" do
       Then { expect(subject).to respond_to(:shift, :supply, :supply=, :"|") }
     end
 
@@ -42,7 +42,7 @@ module Shifty
         end
 
         context "as {:task => <proc/lambda>} passed to ::new" do
-          Given(:callable_task) { Proc.new { :bar } }
+          Given(:callable_task) { proc { :bar } }
           Given(:worker) { Worker.new task: callable_task }
 
           Then { worker.shift == :bar }
@@ -58,20 +58,20 @@ module Shifty
       end
     end
 
-    describe '#suppliable?' do
-      context 'source worker' do
+    describe "#suppliable?" do
+      context "source worker" do
         Given(:worker) { Worker.new { :foo } }
         Then { expect(worker).to_not be_suppliable }
       end
 
-      context 'non-source worker' do
-        Given(:worker) { Worker.new { |v| v +=1 } }
+      context "non-source worker" do
+        Given(:worker) { Worker.new { |v| v += 1 } }
         Then { expect(worker).to be_suppliable }
       end
     end
 
-    describe '#supply=' do
-      context 'source worker' do
+    describe "#supply=" do
+      context "source worker" do
         Given(:source1) { Worker.new { :foo } }
         Given(:source2) { Worker.new { :bar } }
         Then { expect { source1.supply = source2 }.to raise_error(/cannot accept a supply/) }
@@ -105,7 +105,7 @@ module Shifty
       end
     end
 
-    describe 'worker receives a |supply|' do
+    describe "worker receives a |supply|" do
       Given(:source_worker) { Worker.new { :foo } }
       Given(:worker) { Worker.new { |value, supply| supply } }
 
@@ -114,16 +114,16 @@ module Shifty
       Then { pipeline.shift == source_worker }
     end
 
-    describe 'worker receives a |context|' do
+    describe "worker receives a |context|" do
       Given(:source_worker) { Worker.new { :foo } }
 
       When(:pipeline) { source_worker | worker }
 
-      context 'default context' do
+      context "default context" do
         Given(:worker) { Worker.new { |value, supply, context| context } }
         When(:context) { pipeline.shift }
 
-        context 'persists from one shift to the next' do
+        context "persists from one shift to the next" do
           When { context.nothing = :something }
 
           Then { pipeline.shift.nothing == :something }
@@ -131,7 +131,7 @@ module Shifty
         end
       end
 
-      context 'defined context' do
+      context "defined context" do
         Given(:source_worker) do
           Worker.new do
             numbers = (1..3).to_a
@@ -141,8 +141,8 @@ module Shifty
           end
         end
 
-        context 'can be used for configuration' do
-          Given(:context) { OpenStruct.new({ foo: 'bar' }) }
+        context "can be used for configuration" do
+          Given(:context) { OpenStruct.new({foo: "bar"}) }
           Given(:worker) do
             Worker.new(context: context) do |value, supply, context|
               value && "#{context.foo}_#{value}".to_sym

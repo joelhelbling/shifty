@@ -1,10 +1,10 @@
-require 'shifty/roster'
+require "shifty/roster"
 
 module Shifty
   class Gang
     attr_accessor :workers
 
-    def initialize(workers=[])
+    def initialize(workers = [])
       link(workers + [])
     end
 
@@ -31,16 +31,15 @@ module Shifty
     def supplies(subscribing_party)
       subscribing_party.supply = self
     end
-    alias_method :"|", :supplies
+    alias | supplies
 
     private
 
     def link(workers)
       @workers = [workers.shift]
-      while worker = workers.shift do
+      while worker = workers.shift
         Roster[self] << worker
       end
     end
-
   end
 end
