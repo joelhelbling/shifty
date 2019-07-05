@@ -2,7 +2,7 @@ module Shifty
   class WorkerInitializationError < StandardError; end
 
   module DSL
-    def source_worker(argument=nil, &block)
+    def source_worker(argument = nil, &block)
       ensure_correct_arity_for!(argument, block)
 
       series = series_from(argument)
@@ -13,11 +13,10 @@ module Shifty
       Worker.new do
         series.each(&callable)
 
-        while true do
+        loop do
           handoff nil
         end
       end
-
     end
 
     def relay_worker(&block)
@@ -28,7 +27,7 @@ module Shifty
       end
     end
 
-    def side_worker(mode=:normal, &block)
+    def side_worker(mode = :normal, &block)
       ensure_regular_arity(block)
 
       Worker.new do |value|
@@ -41,15 +40,15 @@ module Shifty
       end
     end
 
-    def filter_worker(argument=nil, &block)
-      if (block && argument.respond_to?(:call))
-        throw_with 'You cannot supply two callables'
+    def filter_worker(argument = nil, &block)
+      if block && argument.respond_to?(:call)
+        throw_with "You cannot supply two callables"
       end
       callable = argument.respond_to?(:call) ? argument : block
       ensure_callable(callable)
 
       Worker.new do |value, supply|
-        while value && !callable.call(value) do
+        while value && !callable.call(value)
           value = supply.shift
         end
         value
@@ -59,23 +58,23 @@ module Shifty
     class BatchContext < OpenStruct
       def batch_complete?(value, collection)
         value.nil? ||
-          !! batch_full.call(value, collection)
+          !!batch_full.call(value, collection)
       end
     end
 
     def batch_worker(options = {gathering: 1}, &block)
       ensure_regular_arity(block) if block
       batch_full = block ||
-        Proc.new { |_, batch| batch.size >= options[:gathering] }
+        proc { |_, batch| batch.size >= options[:gathering] }
 
-      batch_context = BatchContext.new({ batch_full: batch_full })
+      batch_context = BatchContext.new({batch_full: batch_full})
 
       Worker.new(context: batch_context) do |value, supply, context|
         if value
           context.collection = [value]
           until context.batch_complete?(
-              context.collection.last,
-              context.collection
+            context.collection.last,
+            context.collection
           )
             context.collection << supply.shift
           end
@@ -92,7 +91,7 @@ module Shifty
           value
         else
           parts = [block.call(value)].flatten
-          while parts.size > 1 do
+          while parts.size > 1
             handoff parts.shift
           end
           parts.shift
@@ -100,7 +99,7 @@ module Shifty
       end
     end
 
-    def trailing_worker(trail_length=2)
+    def trailing_worker(trail_length = 2)
       trail = []
       Worker.new do |value, supply|
         if value
@@ -126,12 +125,12 @@ module Shifty
     private
 
     def throw_with(*msg)
-      raise WorkerInitializationError.new([msg].flatten.join(' '))
+      raise WorkerInitializationError.new([msg].flatten.join(" "))
     end
 
     def ensure_callable(callable)
-      unless callable && callable.respond_to?(:call)
-        throw_with 'You must supply a callable'
+      unless callable&.respond_to?(:call)
+        throw_with "You must supply a callable"
       end
     end
 
@@ -147,20 +146,17 @@ module Shifty
       return unless block
       if argument
         ensure_regular_arity(block)
-      else
-        if block.arity > 0
-          throw_with \
-            'Source worker cannot accept any arguments (arity == 0)'
-        end
+      elsif block.arity > 0
+        throw_with \
+          "Source worker cannot accept any arguments (arity == 0)"
       end
     end
 
     def series_from(series)
       return if series.nil?
-      case
-      when series.respond_to?(:to_a)
+      if series.respond_to?(:to_a)
         series.to_a
-      when series.respond_to?(:scan)
+      elsif series.respond_to?(:scan)
         series.scan(/./)
       else
         [series]
@@ -170,11 +166,10 @@ module Shifty
     def setup_callable_for(block, series)
       return block unless series
       if block
-        return Proc.new { |value| handoff block.call(value) }
+        return proc { |value| handoff block.call(value) }
       else
-        return Proc.new { |value| handoff value }
+        return proc { |value| handoff value }
       end
     end
-
   end
 end

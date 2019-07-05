@@ -24,7 +24,7 @@ module Shifty
         workers << worker
       end
     end
-    alias_method :"<<", :push
+    alias << push
 
     def pop
       gang.workers.pop.tap do |popped|
