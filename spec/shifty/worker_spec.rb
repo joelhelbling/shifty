@@ -162,25 +162,25 @@ module Shifty
     end
 
     describe ":criteria" do
-      Given(:source_worker) { Worker.new { :foo }  }
+      Given(:source_worker) { Worker.new { :foo } }
       Given(:worker) { Worker.new(criteria: criteria) { |v| "#{v}_bar".to_sym } }
 
       When(:pipeline) { source_worker | worker }
 
       context "when criteria returns true" do
-        Given(:criteria) { Proc.new { true } }
+        Given(:criteria) { proc { true } }
 
         Then { pipeline.shift == :foo_bar }
       end
 
       context "when criteria returns false" do
-        Given(:criteria) { Proc.new { false } }
+        Given(:criteria) { proc { false } }
 
         Then { pipeline.shift == :foo }
       end
 
       context "criteria can interrogate worker" do
-        Given(:criteria) { Proc.new { |w| w.has_tag? :uno } }
+        Given(:criteria) { proc { |w| w.has_tag? :uno } }
 
         context "passing criteria" do
           Given { worker.tags = :uno }
@@ -196,8 +196,8 @@ module Shifty
       end
 
       context "multiple criteria" do
-        Given(:criteria1) { Proc.new { |w| w.has_tag? :uno } }
-        Given(:criteria2) { Proc.new { |w| w.has_tag? :dos } }
+        Given(:criteria1) { proc { |w| w.has_tag? :uno } }
+        Given(:criteria2) { proc { |w| w.has_tag? :dos } }
         Given(:criteria) { [criteria1, criteria2] }
 
         context "passing all criteria" do

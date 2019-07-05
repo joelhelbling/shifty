@@ -1,4 +1,4 @@
-require 'forwardable'
+require "forwardable"
 
 module Shifty
   class Roster
