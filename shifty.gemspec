@@ -26,4 +26,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec-given", "~> 3.8"
   spec.add_development_dependency "pry"
   spec.add_development_dependency "simplecov"
+  spec.add_development_dependency "standard", "0.0.41"
 end
