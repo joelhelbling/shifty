@@ -1,33 +1,30 @@
+require 'forwardable'
+
 module Shifty
-  module Roster
-    class << self
-      def [](gang)
-        RosterizedGang.new(gang)
+  class Roster
+    extend Forwardable
+
+    attr_reader :workers
+
+    def initialize(workers = [])
+      @workers = []
+      workers.each do |worker|
+        push worker
       end
     end
-  end
 
-  class RosterizedGang
-    attr_reader :gang
-
-    def initialize(gang)
-      @gang = gang
-    end
-
-    def workers
-      gang.workers
-    end
+    def_delegators :workers, :first, :last
 
     def push(worker)
       if worker
-        worker.supply = workers.last
+        worker.supply = workers.last unless workers.empty?
         workers << worker
       end
     end
     alias << push
 
     def pop
-      gang.workers.pop.tap do |popped|
+      workers.pop.tap do |popped|
         popped.supply = nil
       end
     end
