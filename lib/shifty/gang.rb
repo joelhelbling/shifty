@@ -2,43 +2,40 @@ require "shifty/roster"
 
 module Shifty
   class Gang
-    attr_accessor :workers
+    attr_accessor :roster
 
     def initialize(workers = [])
-      link(workers + [])
-    end
-
-    def roster
-      workers
+      @roster = Roster.new(workers)
     end
 
     def shift
-      workers.last.shift
+      roster.last.shift
     end
 
     def ready_to_work?
-      workers.first.ready_to_work?
+      roster.first.ready_to_work?
     end
 
     def supply
-      workers.first.supply
+      roster.first.supply
     end
 
     def supply=(source_queue)
-      workers.first.supply = source_queue
+      roster.first.supply = source_queue
     end
 
-    def supplies(subscribing_party)
-      subscribing_party.supply = self
+    def supplies(subscribing_worker)
+      subscribing_worker.supply = self
     end
     alias | supplies
 
-    private
+    def append(worker)
+      roster << worker
+    end
 
-    def link(workers)
-      @workers = [workers.shift]
-      while (worker = workers.shift)
-        Roster[self] << worker
+    class << self
+      def [](*workers)
+        new workers
       end
     end
   end

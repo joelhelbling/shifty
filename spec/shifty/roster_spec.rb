@@ -2,18 +2,17 @@ module Shifty
   RSpec.describe Roster do
     include DSL
 
+    # Given { skip "Disabling parts of roster to figure out what is not used" }
     Given(:source) { source_worker((:a..:z).map(&:to_s)) }
     Given(:plusser) { relay_worker { |v| v + "+" } }
     Given(:tilda_er) { relay_worker { |v| v + "~" } }
 
-    Given(:gang) { Gang.new workers }
-
-    When(:roster) { described_class[gang] }
+    When(:roster) { described_class.new workers }
 
     describe "#responds_to?" do
       Given(:workers) { [] }
       Then do
-        expect(roster).to respond_to(:push, :pop, :shift, :unshift)
+        expect(roster).to respond_to(:push, :"<<", :first, :last)
       end
     end
 
@@ -22,7 +21,8 @@ module Shifty
 
       When { roster.push tilda_er }
 
-      Then { gang.shift == "a+~" }
+      Then { roster.last == tilda_er }
+      And  { roster.last.supply == plusser }
     end
 
     describe "#pop" do
@@ -30,9 +30,9 @@ module Shifty
 
       When(:popped) { roster.pop }
 
-      Then { gang.shift == "a+" }
+      Then { roster.last == plusser }
       Then { popped == tilda_er }
-      Then { popped.supply.nil? }
+      Then { expect(popped).to_not be_ready_to_work }
     end
 
     describe "#shift" do
@@ -41,7 +41,7 @@ module Shifty
       When(:shifted) { roster.shift }
 
       Then { shifted == source }
-      Then { expect(gang).to_not be_ready_to_work }
+      Then { expect(roster.first).to_not be_ready_to_work }
     end
 
     describe "#unshift" do
@@ -50,9 +50,9 @@ module Shifty
 
         When { roster.unshift source }
 
-        Then { expect(gang).to be_ready_to_work }
-        Then { gang.roster == [source, plusser, tilda_er] }
-        Then { gang.shift == "a+~" }
+        Then { roster.workers == [source, plusser, tilda_er] }
+        Then { expect(plusser).to be_ready_to_work }
+        Then { plusser.supply == source }
       end
 
       context "when first worker is a source" do

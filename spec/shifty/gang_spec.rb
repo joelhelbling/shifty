@@ -6,11 +6,12 @@ module Shifty
     Given(:plusser) { relay_worker { |v| v + "+" } }
     Given(:tilda_er) { relay_worker { |v| v + "~" } }
 
-    When(:gang) { described_class.new workers }
+    When(:gang) { described_class[ *workers ] }
 
     context "covers Worker API" do
       Then do
-        expect(subject).to respond_to(:ready_to_work?, :shift,
+        expect(subject).to respond_to(
+          :ready_to_work?, :shift,
           :supply, :supply=,
           :supplies, :"|")
       end
@@ -56,19 +57,18 @@ module Shifty
         Then { tilda_er.shift == "a+~" }
       end
 
-      context "still works even if rearranging workers" do
-        Given(:minuser) { relay_worker { |v| v + "-" } }
-
-        When { Roster[gang].push minuser }
-
-        Then { tilda_er.shift == "a+-~" }
-      end
     end
 
-    describe "#roster" do
-      Given(:workers) { [source, plusser, tilda_er] }
+    context "#append" do
+      Given(:workers) { [source, plusser] }
+      Given(:minuser) { relay_worker { |v| v + "-" } }
 
-      Then { gang.roster == workers }
+      When { gang | tilda_er }
+      When { gang.append minuser }
+
+      context "adds a worker to the end of the gang's roster" do
+        Then { tilda_er.shift == "a+-~" }
+      end
     end
 
     context "normal usage" do
