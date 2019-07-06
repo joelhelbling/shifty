@@ -30,7 +30,7 @@ module Shifty
     def side_worker(mode = :normal, &block)
       ensure_regular_arity(block)
 
-      Worker.new do |value|
+      Worker.new(tags: [:side_effect]) do |value|
         value.tap do |v|
           used_value = mode == :hardened ?
             Marshal.load(Marshal.dump(v)) : v

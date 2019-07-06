@@ -157,6 +157,7 @@ module Shifty
           Then { worker.shift == [:foo, :boo] }
           And  { worker.shift == [:bar, :boo] }
           And  { worker.shift.nil? }
+          Then { expect(worker.tags).to include(:side_effect) }
         end
 
         context ":hardened" do
