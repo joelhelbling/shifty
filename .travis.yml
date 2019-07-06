@@ -6,7 +6,6 @@ language: ruby
 rvm:
   - 2.5.5
   - 2.6.3
-  - 2.7.0-preview
   - jruby-9.2.7.0
 before_install: gem install bundler
 before_script:
