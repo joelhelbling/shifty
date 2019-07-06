@@ -2,17 +2,14 @@ require "ostruct"
 
 module Shifty
   class Worker
-    attr_reader :supply
+    attr_reader :supply, :tags
 
     def initialize(p = {}, &block)
       @supply   = p[:supply]
       @task     = block || p[:task]
       @context  = p[:context] || OpenStruct.new
-      # don't define default task here
-      # because we want to allow for
-      # an initialized worker to have
-      # a task injected, including
-      # method-based tasks.
+      @criteria = [p[:criteria] || []].flatten
+      self.tags = p[:tags] || []
     end
 
     def shift
@@ -39,6 +36,14 @@ module Shifty
       @task && @task.arity > 0
     end
 
+    def tags=(tag_arg)
+      @tags = [tag_arg].flatten
+    end
+
+    def has_tag?(tag)
+      tags.include? tag
+    end
+
     private
 
     def ensure_ready_to_work!
@@ -53,7 +58,11 @@ module Shifty
       @my_little_machine ||= Fiber.new {
         loop do
           value = supply&.shift
-          Fiber.yield @task.call(value, supply, @context)
+          if criteria_passes?
+            Fiber.yield @task.call(value, supply, @context)
+          else
+            Fiber.yield value
+          end
         end
       }
     end
@@ -72,6 +81,12 @@ module Shifty
 
     def task_method_accepts_a_value?
       method(:task).arity > 0
+    end
+
+    def criteria_passes?
+      return true if @criteria.empty?
+
+      @criteria.all? { |c| c.call(self) }
     end
   end
 

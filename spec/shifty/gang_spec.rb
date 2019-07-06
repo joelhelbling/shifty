@@ -6,14 +6,15 @@ module Shifty
     Given(:plusser) { relay_worker { |v| v + "+" } }
     Given(:tilda_er) { relay_worker { |v| v + "~" } }
 
-    When(:gang) { described_class[ *workers ] }
+    When(:gang) { described_class[*workers] }
 
     context "covers Worker API" do
       Then do
         expect(subject).to respond_to(
           :ready_to_work?, :shift,
           :supply, :supply=,
-          :supplies, :"|")
+          :supplies, :"|"
+        )
       end
     end
 
@@ -56,7 +57,6 @@ module Shifty
       context "gets gang as source" do
         Then { tilda_er.shift == "a+~" }
       end
-
     end
 
     context "#append" do
