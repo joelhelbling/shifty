@@ -21,9 +21,9 @@ module Shifty
       @task && (supply || !task_accepts_a_value?)
     end
 
-    def supplies(subscribing_party)
-      subscribing_party.supply = self
-      subscribing_party
+    def supplies(subscribing_worker)
+      subscribing_worker.supply = self
+      subscribing_worker
     end
     alias_method :|, :supplies
 

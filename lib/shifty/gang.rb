@@ -2,14 +2,34 @@ require "shifty/roster"
 
 module Shifty
   class Gang
-    attr_accessor :roster
+    attr_reader :roster, :tags
 
-    def initialize(workers = [])
+    def initialize(workers = [], p = {})
       @roster = Roster.new(workers)
+      @criteria = [p[:criteria] || []].flatten
+      self.tags = p[:tags] || []
+    end
+
+    def tags=(tag_arg)
+      @tags = [tag_arg].flatten
+    end
+
+    def has_tag?(tag)
+      tags.include? tag
     end
 
     def shift
-      roster.last.shift
+      if criteria_passes?
+        roster.last.shift
+      else
+        roster.first.supply.shift
+      end
+    end
+
+    def criteria_passes?
+      return true if @criteria.empty?
+
+      @criteria.all? { |c| c.call(self) }
     end
 
     def ready_to_work?
@@ -20,12 +40,13 @@ module Shifty
       roster.first.supply
     end
 
-    def supply=(source_queue)
-      roster.first.supply = source_queue
+    def supply=(supplier)
+      roster.first.supply = supplier
     end
 
     def supplies(subscribing_worker)
       subscribing_worker.supply = self
+      subscribing_worker
     end
     alias_method :|, :supplies
 
