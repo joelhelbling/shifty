@@ -1,21 +1,16 @@
 require "shifty/roster"
+require "shifty/taggable"
 
 module Shifty
   class Gang
     attr_reader :roster, :tags
 
+    include Taggable
+
     def initialize(workers = [], p = {})
       @roster = Roster.new(workers)
-      @criteria = [p[:criteria] || []].flatten
-      self.tags = p[:tags] || []
-    end
-
-    def tags=(tag_arg)
-      @tags = [tag_arg].flatten
-    end
-
-    def has_tag?(tag)
-      tags.include? tag
+      self.criteria = p[:criteria]
+      self.tags     = p[:tags]
     end
 
     def shift
@@ -24,12 +19,6 @@ module Shifty
       else
         roster.first.supply.shift
       end
-    end
-
-    def criteria_passes?
-      return true if @criteria.empty?
-
-      @criteria.all? { |c| c.call(self) }
     end
 
     def ready_to_work?
