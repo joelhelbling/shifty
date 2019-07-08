@@ -1,15 +1,18 @@
 require "ostruct"
+require "shifty/taggable"
 
 module Shifty
   class Worker
     attr_reader :supply, :tags
 
+    include Shifty::Taggable
+
     def initialize(p = {}, &block)
-      @supply   = p[:supply]
-      @task     = block || p[:task]
-      @context  = p[:context] || OpenStruct.new
-      @criteria = [p[:criteria] || []].flatten
-      self.tags = p[:tags] || []
+      @supply       = p[:supply]
+      @task         = block || p[:task]
+      @context      = p[:context] || OpenStruct.new
+      self.criteria = p[:criteria]
+      self.tags     = p[:tags]
     end
 
     def shift
@@ -34,14 +37,6 @@ module Shifty
 
     def suppliable?
       @task && @task.arity > 0
-    end
-
-    def tags=(tag_arg)
-      @tags = [tag_arg].flatten
-    end
-
-    def has_tag?(tag)
-      tags.include? tag
     end
 
     private
@@ -81,12 +76,6 @@ module Shifty
 
     def task_method_accepts_a_value?
       method(:task).arity > 0
-    end
-
-    def criteria_passes?
-      return true if @criteria.empty?
-
-      @criteria.all? { |c| c.call(self) }
     end
   end
 
