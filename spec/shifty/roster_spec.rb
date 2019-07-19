@@ -2,7 +2,6 @@ module Shifty
   RSpec.describe Roster do
     include DSL
 
-    # Given { skip "Disabling parts of roster to figure out what is not used" }
     Given(:source) { source_worker((:a..:z).map(&:to_s)) }
     Given(:plusser) { relay_worker { |v| v + "+" } }
     Given(:tilda_er) { relay_worker { |v| v + "~" } }
