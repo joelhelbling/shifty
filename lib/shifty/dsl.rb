@@ -166,9 +166,9 @@ module Shifty
     def setup_callable_for(block, series)
       return block unless series
       if block
-        return proc { |value| handoff block.call(value) }
+        proc { |value| handoff block.call(value) }
       else
-        return proc { |value| handoff value }
+        proc { |value| handoff value }
       end
     end
   end
