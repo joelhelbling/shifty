@@ -27,7 +27,7 @@ module Shifty
     def supplies(subscribing_worker)
       subscribing_worker.supply = self
     end
-    alias | supplies
+    alias_method :|, :supplies
 
     def append(worker)
       roster << worker

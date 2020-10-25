@@ -235,7 +235,7 @@ module Shifty
           When { context.nothing = :something }
 
           Then { pipeline.shift.nothing == :something }
-          And  { pipeline.shift.class == OpenStruct }
+          And  { pipeline.shift.instance_of?(OpenStruct) }
         end
       end
 

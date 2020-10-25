@@ -25,7 +25,7 @@ module Shifty
       subscribing_party.supply = self
       subscribing_party
     end
-    alias | supplies
+    alias_method :|, :supplies
 
     def supply=(supplier)
       raise WorkerError.new("Worker is a source, and cannot accept a supply") unless suppliable?
