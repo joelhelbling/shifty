@@ -11,7 +11,7 @@ module Shifty
     describe "#responds_to?" do
       Given(:workers) { [] }
       Then do
-        expect(roster).to respond_to(:push, :"<<", :first, :last)
+        expect(roster).to respond_to(:push, :"<<", :first, :last) # rubocop:disable Lint/SymbolConversion
       end
     end
 

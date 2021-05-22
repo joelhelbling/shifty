@@ -13,7 +13,7 @@ module Shifty
         expect(subject).to respond_to(
           :ready_to_work?, :shift,
           :supply, :supply=,
-          :supplies, :"|"
+          :supplies, :"|" # rubocop:disable Lint/SymbolConversion
         )
       end
     end
