@@ -1,7 +1,7 @@
 module Shifty
   RSpec.describe Worker do
     context "#respond_to?" do
-      Then { expect(subject).to respond_to(:shift, :supply, :supply=, :"|") }
+      Then { expect(subject).to respond_to(:shift, :supply, :supply=, :"|") } # rubocop:disable Lint/SymbolConversion
     end
 
     describe "readiness" do
