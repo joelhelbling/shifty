@@ -1,5 +1,5 @@
 [![Gem Version](https://badge.fury.io/rb/shifty.svg)](https://badge.fury.io/rb/shifty)
-[![Build Status](https://travis-ci.org/joelhelbling/shifty.png)](https://travis-ci.org/joelhelbling/shifty)
+[![Tests](https://github.com/joelhelbling/shifty/actions/workflows/ruby.yml/badge.svg)](https://github.com/joelhelbling/shifty/actions/workflows/ruby.yml)
 [![Maintainability](https://api.codeclimate.com/v1/badges/950ded888350c1124348/maintainability)](https://codeclimate.com/github/joelhelbling/shifty/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/950ded888350c1124348/test_coverage)](https://codeclimate.com/github/joelhelbling/shifty/test_coverage)
 
