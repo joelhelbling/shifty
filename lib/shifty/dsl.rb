@@ -10,7 +10,7 @@ module Shifty
 
       return Worker.new(&callable) if series.nil?
 
-      Worker.new do
+      Worker.new(tags: [:source]) do
         series.each(&callable)
 
         loop do
@@ -22,7 +22,7 @@ module Shifty
     def relay_worker(&block)
       ensure_regular_arity(block)
 
-      Worker.new do |value|
+      Worker.new(tags: [:relay]) do |value|
         value && block.call(value)
       end
     end
@@ -32,7 +32,7 @@ module Shifty
 
       Worker.new(tags: [:side_effect]) do |value|
         value.tap do |v|
-          used_value = mode == :hardened ?
+          used_value = (mode == :hardened) ?
             Marshal.load(Marshal.dump(v)) : v
 
           v && block.call(used_value)
@@ -47,7 +47,7 @@ module Shifty
       callable = argument.respond_to?(:call) ? argument : block
       ensure_callable(callable)
 
-      Worker.new do |value, supply|
+      Worker.new(tags: [:filter]) do |value, supply|
         while value && !callable.call(value)
           value = supply.shift
         end
@@ -69,7 +69,7 @@ module Shifty
 
       batch_context = BatchContext.new({batch_full: batch_full})
 
-      Worker.new(context: batch_context) do |value, supply, context|
+      Worker.new(tags: [:batch], context: batch_context) do |value, supply, context|
         if value
           context.collection = [value]
           until context.batch_complete?(
@@ -86,7 +86,7 @@ module Shifty
     def splitter_worker(&block)
       ensure_regular_arity(block)
 
-      Worker.new do |value|
+      Worker.new(tags: [:splitter]) do |value|
         if value.nil?
           value
         else
@@ -101,7 +101,7 @@ module Shifty
 
     def trailing_worker(trail_length = 2)
       trail = []
-      Worker.new do |value, supply|
+      Worker.new(tags: [:trailing]) do |value, supply|
         if value
           trail.unshift value
           if trail.size >= trail_length

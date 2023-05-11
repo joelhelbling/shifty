@@ -10,6 +10,7 @@ module Shifty
           Then { worker.shift == :fee }
           And  { worker.shift == :fi }
           And  { worker.shift.nil? }
+          And  { worker.tags == [:source] }
         end
 
         context "with a range" do
@@ -112,6 +113,7 @@ module Shifty
         And  { relay.shift == "s+ronger" }
         And  { relay.shift == "fas+er" }
         And  { relay.shift.nil? }
+        And  { relay.tags == [:relay] }
       end
 
       context "illegal usage" do
@@ -141,6 +143,7 @@ module Shifty
         And  { worker.shift == 2 }
         And  { worker.shift.nil? }
         And  { side_effect == [0, 2, 4] }
+        And  { worker.tags == [:side_effect] }
       end
 
       context "mode" do
@@ -194,6 +197,7 @@ module Shifty
 
         Then { filter.shift == 2 }
         And { expect(filter.shift).to be_nil }
+        And { filter.tags == [:filter] }
       end
 
       context "illegal usage" do
@@ -237,6 +241,7 @@ module Shifty
           And  { worker.shift == [3, 4, 5] }
           And  { worker.shift == [6, 7] }
           And  { worker.shift.nil? }
+          And  { worker.tags == [:batch] }
         end
 
         context "defaults to batch size of 1" do
