@@ -79,7 +79,7 @@ module Shifty
           Given(:invocation) do
             -> { source_worker { |v| v * 2 } }
           end
-          Then { expect(invocation).to raise_error(/arity == 0/) }
+          Then { expect { invocation.call }.to raise_error(/arity == 0/) }
         end
       end
 
@@ -88,13 +88,13 @@ module Shifty
           Given(:invocation) do
             -> { source_worker([]) { :boo } }
           end
-          Then { expect(invocation).to raise_error(/arity == 1/) }
+          Then { expect { invocation.call }.to raise_error(/arity == 1/) }
         end
         context "and arity > 1" do
           Given(:invocation) do
             -> { source_worker([]) { |p, q| :boo } }
           end
-          Then { expect(invocation).to raise_error(/arity == 1/) }
+          Then { expect { invocation.call }.to raise_error(/arity == 1/) }
         end
       end
     end
@@ -120,7 +120,7 @@ module Shifty
             -> { relay_worker { :foo } }
           end
 
-          Then { expect(invocation).to raise_error(/arity == 1/) }
+          Then { expect { invocation.call }.to raise_error(/arity == 1/) }
         end
       end
     end
@@ -177,7 +177,7 @@ module Shifty
             -> { side_worker { :foo } }
           end
 
-          Then { expect(invocation).to raise_error(/arity == 1/) }
+          Then { expect { invocation.call }.to raise_error(/arity == 1/) }
         end
       end
     end
@@ -200,24 +200,24 @@ module Shifty
         context "requires a callable" do
           context "with no arguments or block" do
             Given(:invocation) { -> { filter_worker } }
-            Then { expect(invocation).to raise_error(/supply a callable/) }
+            Then { expect { invocation.call }.to raise_error(/supply a callable/) }
           end
 
           context "with no callable" do
             Given(:invocation) { -> { filter_worker :foo } }
-            Then { expect(invocation).to raise_error(/supply a callable/) }
+            Then { expect { invocation.call }.to raise_error(/supply a callable/) }
           end
 
           context "with callable arg" do
             Given(:arg) { proc { true } }
             Given(:invocation) { -> { filter_worker arg } }
-            Then { expect(invocation).to_not raise_error }
+            Then { expect { invocation.call }.to_not raise_error }
           end
 
           context "with both callable arg and block" do
             Given(:arg) { proc { true } }
             Given(:invocation) { -> { filter_worker(arg) { false; } } }
-            Then { expect(invocation).to raise_error(/two callables/) }
+            Then { expect { invocation.call }.to raise_error(/two callables/) }
           end
         end
       end
@@ -265,12 +265,12 @@ module Shifty
         context "requires a callable" do
           context "with arity == 0" do
             Given(:invocation) { -> { batch_worker { :foo } } }
-            Then { expect(invocation).to raise_error(/arity == 1/) }
+            Then { expect { invocation.call }.to raise_error(/arity == 1/) }
           end
 
           context "with arity > 1" do
             Given(:invocation) { -> { batch_worker { |a, b| :foo } } }
-            Then { expect(invocation).to raise_error(/arity == 1/) }
+            Then { expect { invocation.call }.to raise_error(/arity == 1/) }
           end
         end
       end
@@ -310,12 +310,12 @@ module Shifty
         context "requires a callable" do
           context "with arity == 0" do
             Given(:invocation) { -> { splitter_worker { [] } } }
-            Then { expect(invocation).to raise_error(/arity == 1/) }
+            Then { expect { invocation.call }.to raise_error(/arity == 1/) }
           end
 
           context "with arity > 1" do
             Given(:invocation) { -> { splitter_worker { |a, b| [] } } }
-            Then { expect(invocation).to raise_error(/arity == 1/) }
+            Then { expect { invocation.call }.to raise_error(/arity == 1/) }
           end
         end
       end
