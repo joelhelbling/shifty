@@ -113,7 +113,7 @@ module Shifty
         And  { relay.shift == "s+ronger" }
         And  { relay.shift == "fas+er" }
         And  { relay.shift.nil? }
-        And  { relay.tags == [:relay] }
+        And  { relay.tags.include? :relay }
       end
 
       context "illegal usage" do
@@ -143,7 +143,7 @@ module Shifty
         And  { worker.shift == 2 }
         And  { worker.shift.nil? }
         And  { side_effect == [0, 2, 4] }
-        And  { worker.tags == [:side_effect] }
+        And  { worker.tags.include? :side_effect }
       end
 
       context "mode" do
@@ -165,7 +165,7 @@ module Shifty
 
         context ":hardened" do
           Given(:worker) do
-            side_worker :hardened, &unsafe_task
+            side_worker mode: :hardened, &unsafe_task
           end
 
           Then { worker.shift == [:foo] }
@@ -197,7 +197,7 @@ module Shifty
 
         Then { filter.shift == 2 }
         And { expect(filter.shift).to be_nil }
-        And { filter.tags == [:filter] }
+        And { filter.tags.include? :filter }
       end
 
       context "illegal usage" do
@@ -208,20 +208,8 @@ module Shifty
           end
 
           context "with no callable" do
-            Given(:invocation) { -> { filter_worker :foo } }
+            Given(:invocation) { -> { filter_worker({}) } }
             Then { expect { invocation.call }.to raise_error(/supply a callable/) }
-          end
-
-          context "with callable arg" do
-            Given(:arg) { proc { true } }
-            Given(:invocation) { -> { filter_worker arg } }
-            Then { expect { invocation.call }.to_not raise_error }
-          end
-
-          context "with both callable arg and block" do
-            Given(:arg) { proc { true } }
-            Given(:invocation) { -> { filter_worker(arg) { false; } } }
-            Then { expect { invocation.call }.to raise_error(/two callables/) }
           end
         end
       end
