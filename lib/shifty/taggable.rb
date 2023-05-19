@@ -1,7 +1,7 @@
 module Shifty
   module Taggable
     def tags=(tag_arg)
-      @tags = [tag_arg].flatten.compact
+      @tags = [tag_arg].flatten.compact.uniq
     end
 
     def criteria=(criteria_arg)
