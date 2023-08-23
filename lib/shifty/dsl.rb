@@ -22,7 +22,7 @@ module Shifty
     def relay_worker(options = {}, &block)
       options[:tags] ||= []
       options[:tags] << :relay
-      ensure_regular_arity(block)
+      ensure_regular_arity!(block)
 
       Worker.new(options) do |value|
         value && block.call(value)
@@ -33,7 +33,7 @@ module Shifty
       options[:tags] ||= []
       options[:tags] << :side_effect
       mode = options[:mode] || :normal
-      ensure_regular_arity(block)
+      ensure_regular_arity!(block)
 
       Worker.new(options) do |value|
         value.tap do |v|
@@ -70,7 +70,7 @@ module Shifty
       options[:tags] << :batch
       options[:gathering] ||= 1
 
-      ensure_regular_arity(block) if block
+      ensure_regular_arity!(block) if block
       batch_full = block ||
         proc { |_, batch| batch.size >= options[:gathering] }
 
@@ -93,7 +93,7 @@ module Shifty
     def splitter_worker(options = {}, &block)
       options[:tags] ||= []
       options[:tags] << :splitter
-      ensure_regular_arity(block)
+      ensure_regular_arity!(block)
 
       Worker.new(options) do |value|
         if value.nil?
@@ -145,7 +145,7 @@ module Shifty
       end
     end
 
-    def ensure_regular_arity(block)
+    def ensure_regular_arity!(block)
       if block.arity != 1
         throw_with \
           "Worker must accept exactly one argument (arity == 1)"
@@ -156,7 +156,7 @@ module Shifty
     def ensure_correct_arity_for!(argument, block)
       return unless block
       if argument
-        ensure_regular_arity(block)
+        ensure_regular_arity!(block)
       elsif block.arity > 0
         throw_with \
           "Source worker cannot accept any arguments (arity == 0)"
