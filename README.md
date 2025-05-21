@@ -7,6 +7,12 @@
 
 _"How many Ruby fibers does it take to screw in a lightbulb?"_
 
+## Concurrency Model
+
+Shifty utilizes Ruby Fibers for cooperative multitasking. This means that all tasks (or "workers") run within a single operating system thread and explicitly yield control to one another. This model is intentionally chosen for its simplicity, which makes it easier to reason about and build sequential data processing pipelines.
+
+For a more detailed explanation of Shifty's design and typical use cases, please see the [Use Cases Document](docs/use_cases.md).
+
 ## Quick Start
 
 Add this line to your application's Gemfile:
