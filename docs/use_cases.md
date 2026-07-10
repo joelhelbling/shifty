@@ -39,6 +39,19 @@ Here are a few conceptual examples of how Shifty could be applied:
     2.  A `BatchWorker` (Shifty provides a `batch_worker` for this purpose) accumulates these items. It passes the accumulated batch to the next worker once a certain number of items are collected or a timeout occurs.
     3.  A `BatchProcessorWorker` then processes the entire batch of items at once (e.g., bulk database insert, writing to a file).
 
+## A Note on Values Passed Between Workers
+
+The examples above pass data from one worker to the next. Because Shifty runs
+each value through every worker before starting the next value, workers should
+treat a handed-off value as read-only and express changes as new values
+(`arr + [x]`, `hash.merge(...)`, `value.with(...)`) rather than mutating in
+place (`arr <<`, `hash[k] =`, `map!`). This keeps failures local and is the
+direction Shifty is moving: a planned release makes deeply frozen handoffs the
+default, with opt-in policies for workers that genuinely need a private scratch
+copy or a shared mutable reference. See
+[handoff immutability policies](planning/handoff-immutability-policies.md) for
+the full design and migration guidance.
+
 ## Conclusion
 
 Shifty aims to provide an intuitive and straightforward way to construct data processing systems within Ruby applications. By breaking down complex tasks into manageable, cooperatively multitasking workers, it helps in building modular, maintainable, and easy-to-understand data pipelines.
