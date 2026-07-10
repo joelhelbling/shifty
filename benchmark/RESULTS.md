@@ -26,7 +26,7 @@ its numbers.
 | array, 100 strings | 140.8k | 84.3k | **14.12M** | 34.5k | 46.6k |
 | hash, 100 pairs | 48.6k | 38.4k | **13.87M** | 14.1k | 20.4k |
 | nested document, ~5k nodes | 9.9k | 5.3k | **13.74M** | 1.9k | 2.4k |
-| deep nesting, 500 levels | 49.0k | 21.3k | — | 8.5k | 10.8k |
+| deep nesting, 500 levels | 49.0k | 21.3k | **13.99M** | 8.5k | 10.8k |
 
 ## Allocations per handoff (GC pressure)
 
@@ -54,13 +54,16 @@ its numbers.
    `:shared` per boundary *per hop*, and the only policy that allocates
    (a full copy of the graph per boundary — 1,711 objects per handoff for
    the ~5k-node document). This is why it is not the default.
-4. **§8.3 fast-path decision: keep option (b) — no fast path.** Marshal
-   gains only ~25–35% on already-frozen values (it re-serializes
-   regardless), so the *measured* saving of skipping the copy entirely
-   would be large (steady-frozen speed) — but the fast path would hand
-   the task a frozen object where its contract promises a mutable
-   scratch copy. Contract simplicity wins at this gem's scale. Reopen
-   trigger: a real workload where `:isolated` boundaries dominate and
-   its inputs are typically already shareable.
+4. **§8.3 fast-path decision: keep option (b) — no fast path.** The
+   "already-frozen" column is the pure Marshal cost on a pre-built value
+   (no construction overhead): 92µs for the deep-nested shape, 21µs for
+   the mid array, versus ~71ns if a `Ractor.shareable?` check skipped
+   the copy — so a fast path would make those handoffs roughly three
+   orders of magnitude cheaper *when inputs are already shareable*.
+   It still loses: it would hand the task a frozen object where the
+   `:isolated` contract promises a mutable scratch copy. Contract
+   simplicity wins at this gem's scale. Reopen trigger: a real workload
+   where `:isolated` boundaries dominate and their inputs are typically
+   already shareable.
 5. **The `:frozen` default is vindicated**: it is the only policy that is
    simultaneously safe and, at steady state, the cheapest of the three.

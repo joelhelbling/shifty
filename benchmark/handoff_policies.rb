@@ -6,8 +6,9 @@
 #   1. per-handoff cost of :shared / :frozen / :isolated / legacy :hardened
 #      (Marshal), including :frozen's first-handoff vs steady-state cost
 #      (the §8.2 amortization claim), and
-#   2. what a Ractor.shareable? fast path would save :isolated on
-#      already-shareable values (the §8.3 open question), and
+#   2. the pure Marshal cost :isolated pays on an already-shareable
+#      value — the copy a Ractor.shareable? fast path would skip
+#      entirely (the §8.3 open question), and
 #   3. allocation counts per policy (GC pressure).
 #
 # Results feed the wiki Performance page.
