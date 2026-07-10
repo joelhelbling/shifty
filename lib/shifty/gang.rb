@@ -57,6 +57,15 @@ module Shifty
       worker.pipeline_policy = pipeline_policy if pipeline_policy
     end
 
+    # Freezes every roster member plus the roster's own membership, so
+    # append/push/pop/shift/unshift all raise FrozenError afterward.
+    def freeze_topology_node!
+      roster.workers.each(&:freeze_topology_node!)
+      roster.workers.freeze
+      roster.freeze
+      freeze
+    end
+
     class << self
       def [](*workers)
         new workers

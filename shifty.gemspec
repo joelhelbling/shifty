@@ -30,4 +30,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pry"
   spec.add_development_dependency "standard", ">= 1.28.2"
   spec.add_development_dependency "simplecov"
+  spec.add_development_dependency "benchmark-ips"
 end

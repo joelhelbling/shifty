@@ -43,8 +43,19 @@ module Shifty
       # The raising Fiber is terminated and can never be resumed; discard
       # it so a caller that rescues the violation can keep shifting.
       # Closure and context state survive — only the loop restarts.
-      @my_little_machine = nil
+      # (A #freeze!-d worker can't rebuild its Fiber, so a violation
+      # there ends the pipeline — the topology guarantee wins.)
+      @my_little_machine = nil unless frozen?
       raise
+    end
+
+    # Materializes lazy state (default task, the Fiber) so that freezing
+    # this instance cannot surprise it later with a FrozenError on ivar
+    # assignment mid-shift, then freezes it.
+    def freeze_topology_node!
+      ensure_ready_to_work!
+      workflow
+      freeze
     end
 
     def ready_to_work?
