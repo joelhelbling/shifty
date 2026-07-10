@@ -5,10 +5,24 @@ SimpleCov.start
 
 require "rspec/given"
 require "pry"
+require "stringio"
 
 require "shifty"
 
+module StderrCapture
+  def capture_stderr
+    original = $stderr
+    $stderr = StringIO.new
+    yield
+    $stderr.string
+  ensure
+    $stderr = original
+  end
+end
+
 RSpec.configure do |config|
+  config.include StderrCapture
+
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
 

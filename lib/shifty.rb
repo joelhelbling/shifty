@@ -1,4 +1,7 @@
 require_relative "shifty/version"
+require_relative "shifty/errors"
+require_relative "shifty/configuration"
+require_relative "shifty/policy"
 require_relative "shifty/worker"
 require_relative "shifty/gang"
 require_relative "shifty/roster"

@@ -6,11 +6,17 @@ module Shifty
     attr_reader :roster, :tags
 
     include Taggable
+    include PolicyDeclarable
 
     def initialize(workers = [], p = {})
       @roster = Roster.new(workers)
       self.criteria = p[:criteria]
       self.tags     = p[:tags]
+      self.pipeline_policy = Policy.canonical(p[:policy]) if p[:policy]
+    end
+
+    def pipeline_policy=(policy_name)
+      roster.workers.each { |w| w.pipeline_policy = policy_name }
     end
 
     def shift

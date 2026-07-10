@@ -9,16 +9,31 @@ module Shifty
   # pipelines, where each worker performs a specific task and passes
   # its output to the next worker in the chain.
   class Worker
-    attr_reader :supply, :tags
+    attr_reader :supply, :tags, :name
+    attr_accessor :pipeline_policy
 
     include Shifty::Taggable
+    include Shifty::PolicyDeclarable
 
     def initialize(p = {}, &block)
       @supply       = p[:supply]
       @task         = block || p[:task]
       @context      = p[:context] || OpenStruct.new
+      @policy       = Policy.canonical(p[:policy]) if p[:policy]
+      @name         = p[:name]
       self.criteria = p[:criteria]
       self.tags     = p[:tags]
+    end
+
+    def effective_policy
+      @policy || pipeline_policy || Shifty.config.default_policy
+    end
+
+    # Applies this worker's effective policy to a value crossing its
+    # boundary. Public because Policy::Supply routes a task's own
+    # supply.shift calls back through it.
+    def intake(value)
+      resolved_policy.call(value, worker: self)
     end
 
     def shift
@@ -59,16 +74,40 @@ module Shifty
       # This is the core of the worker's execution, managed by a Fiber.
       # The Fiber allows the worker to pause its execution (yield) and
       # be resumed later, enabling cooperative multitasking.
+      #
+      # Handoff policy is applied at intake — the moment this worker pulls
+      # a value across its boundary — which is the single seam every value
+      # crosses regardless of how many times an upstream task yielded.
       @my_little_machine ||= Fiber.new {
         loop do
-          value = supply&.shift
+          value = intake(supply&.shift)
           if criteria_passes?
-            Fiber.yield @task.call(value, supply, @context)
+            Fiber.yield perform_task(value)
           else
             Fiber.yield value
           end
         end
       }
+    end
+
+    def perform_task(value)
+      @task.call(value, policy_supply, @context)
+    rescue FrozenError => e
+      raise PolicyViolation.new(
+        worker: self,
+        policy: effective_policy,
+        receiver: e.receiver,
+        value: value,
+        cause: e
+      )
+    end
+
+    def policy_supply
+      supply && Policy::Supply.new(supply, self)
+    end
+
+    def resolved_policy
+      @resolved_policy ||= Policy.resolve(effective_policy)
     end
 
     def default_task
@@ -129,6 +168,4 @@ module Shifty
     # For typical use cases where a Shifty pipeline is built and run, no
     # external threading is usually involved by the user.
   end
-
-  class WorkerError < StandardError; end
 end

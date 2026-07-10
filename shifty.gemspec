@@ -20,10 +20,14 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
+  spec.required_ruby_version = ">= 3.2"
+
+  spec.add_dependency "ostruct"
+
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec", "~> 3.9"
   spec.add_development_dependency "rspec-given", "~> 3.8"
   spec.add_development_dependency "pry"
   spec.add_development_dependency "standard", ">= 1.28.2"
-  spec.add_development_dependency "codeclimate-test-reporter"
+  spec.add_development_dependency "simplecov"
 end

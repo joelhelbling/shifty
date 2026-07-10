@@ -152,9 +152,17 @@ module Shifty
 
         When { source | worker }
 
-        context ":normal (default)" do
+        context ":normal (default) — a mutating task violates the :frozen default policy" do
           Given(:worker) do
             side_worker(&unsafe_task)
+          end
+
+          Then { expect { worker.shift }.to raise_error(Shifty::PolicyViolation) }
+        end
+
+        context "policy: :shared preserves the classic mutable-reference behavior" do
+          Given(:worker) do
+            side_worker(policy: :shared, &unsafe_task)
           end
 
           Then { worker.shift == [:foo, :boo] }
@@ -163,9 +171,9 @@ module Shifty
           Then { expect(worker.tags).to include(:side_effect) }
         end
 
-        context ":hardened" do
+        context "policy: :isolated — the block's mutations evaporate" do
           Given(:worker) do
-            side_worker mode: :hardened, &unsafe_task
+            side_worker policy: :isolated, &unsafe_task
           end
 
           Then { worker.shift == [:foo] }
