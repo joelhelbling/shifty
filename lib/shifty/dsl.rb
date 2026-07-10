@@ -1,6 +1,4 @@
 module Shifty
-  class WorkerInitializationError < StandardError; end
-
   module DSL
     def source_worker(argument = nil, &block)
       ensure_correct_arity_for!(argument, block)
@@ -32,17 +30,24 @@ module Shifty
     def side_worker(options = {}, &block)
       options[:tags] ||= []
       options[:tags] << :side_effect
-      mode = options[:mode] || :normal
+      options[:policy] = :hardened if options.delete(:mode) == :hardened
       ensure_regular_arity!(block)
 
-      Worker.new(options) do |value|
+      # The block must ask the worker for its policy at shift time, so the
+      # local is captured by the closure before it is assigned. Not redundant.
+      worker = nil
+      worker = Worker.new(options) do |value| # standard:disable Style/RedundantAssignment
         value.tap do |v|
-          used_value = (mode == :hardened) ?
+          next unless v
+          # Under :isolated the block observes a private scratch copy, so
+          # its mutations evaporate and the untouched value flows on.
+          used_value = (worker.effective_policy == :isolated) ?
             Marshal.load(Marshal.dump(v)) : v
 
-          v && block.call(used_value)
+          block.call(used_value)
         end
       end
+      worker
     end
 
     def filter_worker(options = {}, &block)
@@ -122,7 +127,10 @@ module Shifty
             trail.unshift supply.shift
           end
 
-          trail
+          # Hand off a snapshot: the builder keeps mutating `trail` across
+          # calls, and a downstream :frozen intake would freeze the live
+          # closure array in place.
+          trail.dup
         else
           value # hint: it's nil!
         end

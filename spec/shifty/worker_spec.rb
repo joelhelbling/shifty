@@ -80,7 +80,7 @@ module Shifty
 
     describe "#|" do
       Given(:source_worker) { Worker.new { :foo } }
-      Given(:subscribing_worker) { Worker.new { |v| "#{v}_bar".to_sym } }
+      Given(:subscribing_worker) { Worker.new { |v| :"#{v}_bar" } }
 
       When(:pipeline) { source_worker | subscribing_worker }
 
@@ -107,11 +107,11 @@ module Shifty
 
     describe "worker receives a |supply|" do
       Given(:source_worker) { Worker.new { :foo } }
-      Given(:worker) { Worker.new { |value, supply| supply } }
+      Given(:worker) { Worker.new { |value, supply| [value, supply.shift] } }
 
       When(:pipeline) { source_worker | worker }
 
-      Then { pipeline.shift == source_worker }
+      Then { pipeline.shift == [:foo, :foo] }
     end
 
     describe ":tags" do
@@ -163,7 +163,7 @@ module Shifty
 
     describe ":criteria" do
       Given(:source_worker) { Worker.new { :foo } }
-      Given(:worker) { Worker.new(criteria: criteria) { |v| "#{v}_bar".to_sym } }
+      Given(:worker) { Worker.new(criteria: criteria) { |v| :"#{v}_bar" } }
 
       When(:pipeline) { source_worker | worker }
 
@@ -253,7 +253,7 @@ module Shifty
           Given(:context) { OpenStruct.new({foo: "bar"}) }
           Given(:worker) do
             Worker.new(context: context) do |value, supply, context|
-              value && "#{context.foo}_#{value}".to_sym
+              value && :"#{context.foo}_#{value}"
             end
           end
 
