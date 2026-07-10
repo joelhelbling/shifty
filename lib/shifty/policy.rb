@@ -4,10 +4,11 @@ module Shifty
   # policy declaration (its contract) always wins over the pipeline default.
   module PolicyDeclarable
     def with_policy(policy_name)
-      policy_name = Policy.canonical(policy_name)
-      Policy.resolve(policy_name)
+      policy_name = Policy.validate!(policy_name)
       node = self
-      while node.respond_to?(:pipeline_policy=)
+      seen = {}.compare_by_identity
+      while node.respond_to?(:pipeline_policy=) && !seen[node]
+        seen[node] = true
         node.pipeline_policy = policy_name
         node = node.supply
       end
@@ -70,6 +71,16 @@ module Shifty
           replacement
         else
           name
+        end
+      end
+
+      # Canonicalizes and validates a policy name at declaration time, so
+      # a typo fails where it was written rather than at first shift.
+      def validate!(name)
+        canonical(name).tap do |canonical_name|
+          unless TABLE.key?(canonical_name)
+            raise ArgumentError, "unknown policy #{name.inspect}"
+          end
         end
       end
     end
