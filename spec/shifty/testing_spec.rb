@@ -37,6 +37,15 @@ module Shifty
         And { expect(mutator.effective_policy).to eq(:shared) }
       end
 
+      context "false is a legitimate payload, not end-of-stream" do
+        # relay_worker's `value &&` guard passes false through untouched,
+        # so the negator applies only to the two true inputs.
+        Given(:flipper) { relay_worker { |v| !v } }
+        When(:outputs) { Testing.run(flipper, inputs: [true, false, true]) }
+        Then { expect(outputs).to eq([false, false, false]) }
+        And { expect(outputs.length).to eq(3) }
+      end
+
       context "raises a diagnostic when a worker never passes the nil sentinel through" do
         Given(:worker) { Worker.new { |v| v.to_s } }
         Then do
@@ -53,6 +62,14 @@ module Shifty
     end
 
     describe ".mutates_input?" do
+      context "an undumpable input raises a descriptive error" do
+        Given(:worker) { relay_worker { |v| v } }
+        Then do
+          expect { Testing.mutates_input?(worker, proc {}) }
+            .to raise_error(Shifty::Error, /deep-copyable/)
+        end
+      end
+
       context "a mutating task is detected" do
         Given(:worker) { Worker.new(policy: :shared) { |v| v << :x } }
         Then { expect(Testing.mutates_input?(worker, [:a])).to be true }

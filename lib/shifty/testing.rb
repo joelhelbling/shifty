@@ -16,9 +16,9 @@ module Shifty
           subject.supply = source_for(inputs)
           outputs = []
           shifts = 0
-          while (value = subject.shift)
+          until (value = subject.shift).nil?
             outputs << value
-            if (shifts += 1) >= max_shifts
+            if (shifts += 1) > max_shifts
               raise Error, "Shifty::Testing.run exceeded #{max_shifts} shifts " \
                 "without seeing the nil end-of-stream sentinel. The worker's " \
                 "task probably converts nil into a non-nil value; let nil " \
@@ -33,7 +33,13 @@ module Shifty
       # deep copy and reports whether the task changed it — surfacing
       # mutation even when the current policy permits or hides it.
       def mutates_input?(worker, input)
-        copy = Marshal.load(Marshal.dump(input))
+        copy = begin
+          Marshal.load(Marshal.dump(input))
+        rescue TypeError => e
+          raise Error, "Shifty::Testing.mutates_input? needs a deep-copyable " \
+            "(Marshal-dumpable) input, but got an instance of #{input.class} " \
+            "(#{e.message})."
+        end
         baseline = Marshal.dump(copy)
         harness(worker, :shared) do |subject|
           subject.supply = source_for([copy])
