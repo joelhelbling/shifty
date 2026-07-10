@@ -1,3 +1,7 @@
+> This page covers the raw `Shifty::Worker` API. The
+> [wiki's Worker-Types page](https://github.com/joelhelbling/shifty/wiki/Worker-Types)
+> covers every DSL worker and their handoff-policy behavior.
+
 # Shifty::Worker
 
 _The workhorse of the Shifty framework._

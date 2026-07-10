@@ -82,6 +82,9 @@ The old `side_worker(:hardened)` handed the block a `Marshal.load(Marshal.dump(v
 # 0.5.0 code
 source = source_worker [[:foo], [:bar]]
 stasher = side_worker(:hardened) { |v| v << :boo }   # old positional mode
+# NOTE: on 0.6.0 this positional form raises TypeError (side_worker now
+# takes an options hash) — it does NOT get the friendly deprecation
+# warning. Only the keyword forms (mode:/policy:) warn.
 
 # 0.6.0 code — same behavior, no warning
 stasher = side_worker(policy: :isolated) { |v| v << :boo }

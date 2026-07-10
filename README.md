@@ -45,6 +45,13 @@ Shifty.configure { |c| c.default_policy = :shared }
 | Mutation in the task | raises `Shifty::PolicyViolation` | works, stays local | works, leaks |
 | Copying per handoff | none | full graph | none |
 
+### Upgrading from 0.5.0?
+
+Start with the [Migration Guide](https://github.com/joelhelbling/shifty/wiki/Migration-Guide-0.6) —
+it names everything that breaks and gives four migration paths in order of
+preference. `Shifty::Testing.mutates_input?` will inventory which of your
+workers mutate their input *before* you flip the switch.
+
 There's much more in the wiki: [Handoff Policies](https://github.com/joelhelbling/shifty/wiki/Handoff-Policies) in depth,
 [coding idioms under :frozen](https://github.com/joelhelbling/shifty/wiki/Coding-Idioms-Under-Frozen),
 the [0.6 migration guide](https://github.com/joelhelbling/shifty/wiki/Migration-Guide-0.6),
@@ -180,7 +187,7 @@ work.
 source = source_worker (0..3)
 
 evens = []
-even_stasher = side_effect do |value|
+even_stasher = side_worker do |value|
   if value % 2 == 0
     evens << value
   end

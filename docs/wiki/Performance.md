@@ -16,7 +16,7 @@ Rows labeled *fresh value* construct a new value inside each iteration, so they 
 | array, 100 strings | 140.8k | 84.3k | **14.12M** | 34.5k | 46.6k |
 | hash, 100 pairs | 48.6k | 38.4k | **13.87M** | 14.1k | 20.4k |
 | nested document, ~5k nodes | 9.9k | 5.3k | **13.74M** | 1.9k | 2.4k |
-| deep nesting, 500 levels | 49.0k | 21.3k | — | 8.5k | 10.8k |
+| deep nesting, 500 levels | 49.0k | 21.3k | **13.99M** | 8.5k | 10.8k |
 
 ## Allocations per handoff (GC pressure)
 

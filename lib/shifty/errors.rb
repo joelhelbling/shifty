@@ -48,7 +48,8 @@ module Shifty
         Either make the task non-destructive — e.g. `map` instead of `map!`, \
         `value.with(...)`, `arr + [x]`, `hash.merge(...)` — or declare a different \
         policy on this worker: `policy: :isolated` (task works on a private scratch \
-        copy) or `policy: :shared` (raw reference; no protection).
+        copy) or `policy: :shared` (raw reference; no protection). \
+        More: https://github.com/joelhelbling/shifty/wiki/Handoff-Policies
       MSG
     end
 
@@ -113,7 +114,8 @@ module Shifty
         "that cannot cross the handoff boundary under the #{policy.inspect} policy: " \
         "it cannot be #{(policy == :isolated) ? "deep-copied" : "frozen"}. " \
         "Declare `policy: :shared` on this worker (raw pass-by-reference), " \
-        "or restructure the value."
+        "or restructure the value. " \
+        "More: https://github.com/joelhelbling/shifty/wiki/Handoff-Policies"
     end
   end
 end
