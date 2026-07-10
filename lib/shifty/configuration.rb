@@ -1,9 +1,13 @@
 module Shifty
   class Configuration
-    attr_accessor :default_policy
+    attr_reader :default_policy
 
     def initialize
       @default_policy = :frozen
+    end
+
+    def default_policy=(policy_name)
+      @default_policy = Policy.validate!(policy_name)
     end
   end
 

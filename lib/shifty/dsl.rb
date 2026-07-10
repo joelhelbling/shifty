@@ -30,7 +30,7 @@ module Shifty
     def side_worker(options = {}, &block)
       options[:tags] ||= []
       options[:tags] << :side_effect
-      options[:policy] = :hardened if options.delete(:mode) == :hardened
+      deprecate_mode_option!(options)
       ensure_regular_arity!(block)
 
       # The block must ask the worker for its policy at shift time, so the
@@ -42,7 +42,7 @@ module Shifty
           # Under :isolated the block observes a private scratch copy, so
           # its mutations evaporate and the untouched value flows on.
           used_value = (worker.effective_policy == :isolated) ?
-            Marshal.load(Marshal.dump(v)) : v
+            Policy::Isolated.call(v, worker: worker) : v
 
           block.call(used_value)
         end
@@ -142,6 +142,19 @@ module Shifty
     end
 
     private
+
+    def deprecate_mode_option!(options)
+      return unless options.key?(:mode)
+      mode = options.delete(:mode)
+      if mode == :hardened
+        warn "[shifty] side_worker mode: :hardened is deprecated and will be " \
+             "removed in 1.0.0; use policy: :isolated instead."
+        options[:policy] ||= :isolated
+      else
+        warn "[shifty] side_worker's mode: option is deprecated and ignored " \
+             "(received mode: #{mode.inspect}); declare a policy: instead."
+      end
+    end
 
     def throw_with(*msg)
       raise WorkerInitializationError.new([msg].flatten.join(" "))

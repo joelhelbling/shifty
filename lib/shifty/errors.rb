@@ -64,16 +64,27 @@ module Shifty
       end
     end
 
+    # Bounds the diagnostic graph walk; past this the heuristic gives up
+    # and reports the honest "inspect both to judge" fallback rather than
+    # risking a SystemStackError that would mask the violation itself.
+    MAX_REACHABILITY_NODES = 50_000
+
     def reachable_from_value?
-      reachable?(value, receiver, {}.compare_by_identity)
+      seen = {}.compare_by_identity
+      stack = [value]
+      until stack.empty?
+        node = stack.pop
+        next if node.nil? || seen[node]
+        return false if seen.size >= MAX_REACHABILITY_NODES
+        seen[node] = true
+        return true if node.equal?(receiver)
+        stack.concat(children_of(node))
+      end
+      false
     end
 
-    def reachable?(node, target, seen)
-      return false if node.nil? || seen[node]
-      seen[node] = true
-      return true if node.equal?(target)
-
-      children = case node
+    def children_of(node)
+      case node
       when Array then node
       when Hash then node.keys + node.values
       when Struct then node.to_a
@@ -81,7 +92,6 @@ module Shifty
         members = (node.respond_to?(:to_h) && node.is_a?(Data)) ? node.to_h.values : []
         members + node.instance_variables.map { |iv| node.instance_variable_get(iv) }
       end
-      children.any? { |child| reachable?(child, target, seen) }
     end
   end
 

@@ -12,18 +12,25 @@ module Shifty
       @roster = Roster.new(workers)
       self.criteria = p[:criteria]
       self.tags     = p[:tags]
-      self.pipeline_policy = Policy.canonical(p[:policy]) if p[:policy]
+      self.pipeline_policy = Policy.validate!(p[:policy]) if p[:policy]
     end
 
     def pipeline_policy=(policy_name)
+      # Persisted so workers appended after the declaration inherit it.
+      @pipeline_policy = policy_name
       roster.workers.each { |w| w.pipeline_policy = policy_name }
     end
+
+    attr_reader :pipeline_policy
 
     def shift
       if criteria_passes?
         roster.last.shift
       else
-        roster.first.supply.shift
+        # Even when the gang's criteria bypasses its workers, the value
+        # still crosses the gang's boundary — govern it with the entry
+        # worker's policy, matching Worker#shift's bypass behavior.
+        roster.first.intake(roster.first.supply.shift)
       end
     end
 
@@ -32,7 +39,7 @@ module Shifty
     end
 
     def supply
-      roster.first.supply
+      roster.first&.supply
     end
 
     def supply=(supplier)
@@ -47,6 +54,7 @@ module Shifty
 
     def append(worker)
       roster << worker
+      worker.pipeline_policy = pipeline_policy if pipeline_policy
     end
 
     class << self

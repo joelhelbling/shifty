@@ -19,7 +19,7 @@ module Shifty
       @supply       = p[:supply]
       @task         = block || p[:task]
       @context      = p[:context] || OpenStruct.new
-      @policy       = Policy.canonical(p[:policy]) if p[:policy]
+      @policy       = Policy.validate!(p[:policy]) if p[:policy]
       @name         = p[:name]
       self.criteria = p[:criteria]
       self.tags     = p[:tags]
@@ -33,12 +33,18 @@ module Shifty
     # boundary. Public because Policy::Supply routes a task's own
     # supply.shift calls back through it.
     def intake(value)
-      resolved_policy.call(value, worker: self)
+      Policy.resolve(effective_policy).call(value, worker: self)
     end
 
     def shift
       ensure_ready_to_work!
       workflow.resume
+    rescue PolicyError
+      # The raising Fiber is terminated and can never be resumed; discard
+      # it so a caller that rescues the violation can keep shifting.
+      # Closure and context state survive — only the loop restarts.
+      @my_little_machine = nil
+      raise
     end
 
     def ready_to_work?
@@ -104,10 +110,6 @@ module Shifty
 
     def policy_supply
       supply && Policy::Supply.new(supply, self)
-    end
-
-    def resolved_policy
-      @resolved_policy ||= Policy.resolve(effective_policy)
     end
 
     def default_task

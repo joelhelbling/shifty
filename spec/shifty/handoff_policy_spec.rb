@@ -312,6 +312,107 @@ module Shifty
       end
     end
 
+    describe "eager policy validation at declaration time" do
+      context "Worker.new rejects an unknown policy immediately" do
+        Then do
+          expect { Worker.new(policy: :bogus) { |v| v } }
+            .to raise_error(ArgumentError, /unknown policy :bogus/)
+        end
+      end
+
+      context "Gang.new rejects an unknown policy immediately" do
+        Then do
+          expect { Gang.new([Worker.new { |v| v }], policy: :bogus) }
+            .to raise_error(ArgumentError, /unknown policy :bogus/)
+        end
+      end
+
+      context "the global default rejects an unknown policy immediately" do
+        Then do
+          expect { Shifty.configure { |c| c.default_policy = :bogus } }
+            .to raise_error(ArgumentError, /unknown policy :bogus/)
+        end
+      end
+    end
+
+    describe "recovery after a policy violation" do
+      context "a rescued PolicyViolation does not kill the pipeline" do
+        Given(:source) { source_worker [[:bad], [:good]] }
+        Given(:mutator) do
+          Worker.new { |v| (v == [:bad]) ? v << :x : v }
+        end
+        Given(:pipeline) { source | mutator }
+
+        When(:first_error) do
+          pipeline.shift
+          nil
+        rescue PolicyViolation => e
+          e
+        end
+
+        Then { expect(first_error).to be_a(PolicyViolation) }
+        And { expect(pipeline.shift).to eq([:good]) }
+      end
+    end
+
+    describe "Gang boundary behaviors" do
+      Given(:mutable_source) { Worker.new { [:raw] } }
+
+      context "criteria-bypassed values are still governed at the gang boundary" do
+        Given(:inner) { Worker.new { |v| v } }
+        Given(:gang) { Gang.new([inner], criteria: ->(g) { false }) }
+        Given { gang.supply = mutable_source }
+
+        When(:result) { gang.shift }
+
+        Then { expect(result).to eq([:raw]) }
+        And { expect(result).to be_frozen }
+      end
+
+      context "a worker appended after a policy declaration inherits it" do
+        Given(:early) { Worker.new { |v| v } }
+        Given(:late) { Worker.new { |v| v } }
+        Given(:gang) { Gang[early] }
+        When do
+          gang.with_policy(:isolated)
+          gang.append(late)
+        end
+
+        Then { expect(late.effective_policy).to eq(:isolated) }
+      end
+
+      context "a member's own declaration beats the gang's policy" do
+        Given(:declared) { Worker.new(policy: :shared) { |v| v } }
+        Given!(:gang) { Gang.new([declared], policy: :isolated) }
+
+        Then { expect(declared.effective_policy).to eq(:shared) }
+      end
+
+      context "declaring policy on an empty gang works (populate later)" do
+        Given(:gang) { Gang.new([]) }
+        When(:result) { gang.with_policy(:isolated) }
+        Then { expect(result).to be gang }
+      end
+    end
+
+    describe "with_policy on a self-referential pipe terminates" do
+      Given(:worker) { Worker.new { |v| v } }
+      When(:result) { (worker | worker).with_policy(:isolated) } # standard:disable Lint/BinaryOperatorWithIdenticalOperands
+      Then { expect(result).to be worker }
+      And { expect(worker.effective_policy).to eq(:isolated) }
+    end
+
+    describe "deprecated mode: values other than :hardened warn and are ignored" do
+      Given(:warning) do
+        capture_stderr do
+          @worker = side_worker(mode: :normal) { |v| v }
+        end
+      end
+
+      Then { expect(warning).to match(/mode: option is deprecated and ignored/) }
+      And { expect(@worker.effective_policy).to eq(:frozen) }
+    end
+
     describe "PolicyViolation receiver heuristic" do
       Given(:catch_violation) do
         lambda do |pipeline|
@@ -329,6 +430,19 @@ module Shifty
 
         Then { expect(violation.receiver).to eq([1, 2]) }
         And { expect(violation.receiver).not_to eq(violation.value) }
+        And { expect(violation.message).to match(/reachable from the handed-off value/) }
+      end
+
+      context "mutating an object nested inside a handed-off Struct" do
+        Given(:struct_class) { Struct.new(:items) }
+        Given(:source) do
+          klass = struct_class
+          Worker.new { klass.new([1]) }
+        end
+        Given(:mutator) { Worker.new { |v| v.items << 2 } }
+        When(:violation) { catch_violation.call(source | mutator) }
+
+        Then { expect(violation.receiver).to eq([1]) }
         And { expect(violation.message).to match(/reachable from the handed-off value/) }
       end
 
