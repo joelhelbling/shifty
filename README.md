@@ -1,19 +1,57 @@
 [![Gem Version](https://badge.fury.io/rb/shifty.svg)](https://badge.fury.io/rb/shifty)
 [![Tests](https://github.com/joelhelbling/shifty/actions/workflows/ruby.yml/badge.svg)](https://github.com/joelhelbling/shifty/actions/workflows/ruby.yml)
-[![Maintainability](https://api.codeclimate.com/v1/badges/950ded888350c1124348/maintainability)](https://codeclimate.com/github/joelhelbling/shifty/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/950ded888350c1124348/test_coverage)](https://codeclimate.com/github/joelhelbling/shifty/test_coverage)
 
 # The Shifty Framework
 
 _"How many Ruby fibers does it take to screw in a lightbulb?"_
 
+Shifty requires **Ruby 3.2 or newer** as of version 0.6.0. On older Rubies,
+use shifty 0.5.0 (which also retains the classic mutable-handoff behavior).
+
 ## Concurrency Model
 
 Shifty utilizes Ruby Fibers for cooperative multitasking. This means that all tasks (or "workers") run within a single operating system thread and explicitly yield control to one another. This model is intentionally chosen for its simplicity, which makes it easier to reason about and build sequential data processing pipelines.
 
-Single-threading frees you from *preemptive* concurrency hazards (races, mutexes) within a pipeline. It does not, by itself, make the data passing between workers safe — a worker that mutates a value it was handed can still corrupt what later workers see. Governing those handoffs is a separate concern; see the planned [handoff immutability policies](docs/planning/handoff-immutability-policies.md). The Fiber model is also deliberately compatible with a future Ractor-backed worker type, rather than a rejection of parallelism.
+Single-threading frees you from *preemptive* concurrency hazards (races, mutexes) within a pipeline. It does not, by itself, make the data passing between workers safe — a worker that mutates a value it was handed could corrupt what later workers see. As of 0.6.0, those handoffs are governed by [handoff immutability policies](#handoff-policies-new-in-060). The Fiber model is also deliberately compatible with a future Ractor-backed worker type, rather than a rejection of parallelism — and frozen, shareable handoff values are exactly what Ractor boundaries want.
 
 For a more detailed explanation of Shifty's design and typical use cases, please see the [Use Cases Document](docs/use_cases.md).
+
+## Handoff Policies (new in 0.6.0)
+
+Shifty workers are easy to reason about because each one is isolated; the
+values flowing *between* them were, until now, the un-governed part of the
+system. As of 0.6.0, values are **deeply frozen at every handoff by
+default**. Workers that need a private scratch copy can declare
+`policy: :isolated`; workers that genuinely need shared mutable references
+can declare `policy: :shared`. Mutation bugs that used to surface as
+mysterious downstream corruption now either cannot happen or raise
+immediately at the worker responsible — with an error message that tells
+you exactly what to do about it.
+
+```ruby
+# Per worker — part of the worker's contract:
+scratch = Shifty::Worker.new(policy: :isolated) { |v| v << transform(v) }
+
+# Per pipeline — the default for workers that don't declare their own:
+pipeline = (source | parser | sink).with_policy(:shared)
+
+# Globally (the built-in default is :frozen):
+Shifty.configure { |c| c.default_policy = :shared }
+```
+
+| | `:frozen` (default) | `:isolated` | `:shared` |
+|---|---|---|---|
+| The task receives | frozen reference | private mutable deep copy | the raw reference |
+| Mutation in the task | raises `Shifty::PolicyViolation` | works, stays local | works, leaks |
+| Copying per handoff | none | full graph | none |
+
+There's much more in the wiki: [Handoff Policies](https://github.com/joelhelbling/shifty/wiki/Handoff-Policies) in depth,
+[coding idioms under :frozen](https://github.com/joelhelbling/shifty/wiki/Coding-Idioms-Under-Frozen),
+the [0.6 migration guide](https://github.com/joelhelbling/shifty/wiki/Migration-Guide-0.6),
+[testing workers](https://github.com/joelhelbling/shifty/wiki/Testing-Workers), and
+[performance numbers](https://github.com/joelhelbling/shifty/wiki/Performance)
+(spoiler: at steady state, `:frozen` costs about 71 nanoseconds per handoff
+no matter how big the value is).
 
 ## Quick Start
 
@@ -171,10 +209,10 @@ it is, there really isn't a way to prevent the implementation of any
 worker from creating side effects.
 
 _And still wait,_ you'll also be wanting to say, _isn't it possible
-that a side worker could mutate the value as it's passed through?_  And
-again, yes.  It would be very difficult\* in the Ruby language (where
-so many things are passed by reference) to perfectly prevent a side
-worker from mutating the value.  But please don't.
+that a side worker could mutate the value as it's passed through?_
+As of 0.6.0: no, not by accident. A side worker's contract is
+"observe, don't modify," and the default `:frozen` handoff policy
+finally enforces it.
 
 The side effect worker's purpose is to provide _intentionality_ and
 clarity.  When you're creating a side effect, let it be very clear.
@@ -186,54 +224,39 @@ same token, if there is a problem with a side effect, troubleshooting
 it will be much simpler if the side effects are already isolated and
 named.
 
-Another measure for preventing side workers from creating unwanted
-side-effects is to use `:hardened` mode.  That's right, `side_worker`
-has a mode (which defaults to `:normal`).  When set to `:hardened`,
-each value is `Marshal.dump`ed and `Marshal.load`ed before being
-passed to the side worker's callable.  This helps to ensure that
-the original value will be passed through to the next worker in the
-queue in a pristine state (unmodified), and that no future or
-subsequent modification can take place.
-
 Given a source...
 
 ```ruby
 source = source_worker [[:foo], [:bar]]
 ```
 
-Consider this unsafe, unhardened side worker:
+...consider this mutating side worker:
 
 ```ruby
 unsafe = side_worker { |v| v << :boo }
-```
 
-This produces unwanted mutations, because of the `<<`.
-
-```ruby
 pipeline = source | unsafe
 
-pipeline.shift #=> [:foo, :boo] <-- Oh noes!
-pipeline.shift #=> [:bar, :boo] <-- Disaster!
+pipeline.shift #=> raises Shifty::PolicyViolation, naming this worker
+```
+
+Under the default `:frozen` policy that mutation raises immediately,
+at the offending worker. If the side worker's mutations are harmless
+scratch work you'd rather keep, give it a private copy instead:
+
+```ruby
+unsafe = side_worker(policy: :isolated) { |v| v << :boo }
+
+pipeline = source | unsafe
+
+pipeline.shift #=> [:foo] <-- mutations evaporate
+pipeline.shift #=> [:bar] <-- the original flows on, pristine
 pipeline.shift #=> nil
 ```
 
-Let's harden it:
-
-```ruby
-unsafe = side_worker(:hardened) { |v| v << :boo }
-```
-
-The `:hardened` side worker doesn't have access to the original
-value, and therefore its shenanigans are moot with respect to
-the main workflow:
-
-```ruby
-pipeline = source | unsafe
-
-pipeline.shift #=> [:foo] <-- No changes
-pipeline.shift #=> [:bar] <-- Much better
-pipeline.shift #=> nil
-```
+(Old-timers: `side_worker mode: :hardened` still works, mapped to
+`policy: :isolated` with a deprecation warning; it will be removed in
+1.0.0.)
 
 ### Filter Worker
 
@@ -461,7 +484,13 @@ example).
 ## Shifty::Worker
 
 The Shifty::Worker documentation (which was the old README) is now
-[here](docs/shifty/worker.md).
+[here](docs/shifty/worker.md), and the
+[wiki](https://github.com/joelhelbling/shifty/wiki) goes deeper on every
+worker type, handoff policies, testing, migration, and performance.
 
 ## Roadmap
+
+- **1.0.0** — remove the deprecated `:hardened` alias; stabilize the API.
+- **Someday** — a Ractor-backed worker type for true parallelism; the
+  `:frozen` policy's shareable values are deliberately the groundwork.
 

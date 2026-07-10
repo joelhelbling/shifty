@@ -150,20 +150,22 @@ module Shifty
     #
     # Note that single-threading does NOT make the data flowing between workers
     # safe on its own: because each value passes through every worker before the
-    # next value begins, a worker that mutates a handed-off value can silently
+    # next value begins, a worker that mutates a handed-off value could silently
     # corrupt what downstream workers observe. That hazard is orthogonal to
-    # threading and is addressed separately by handoff immutability policies
-    # (see docs/planning/handoff-immutability-policies.md).
+    # threading and is governed by handoff immutability policies: values are
+    # deeply frozen at intake by default (:frozen), with :isolated and :shared
+    # opt-outs per worker/pipeline/global (see lib/shifty/policy.rb and the
+    # project wiki's Handoff-Policies page).
     #
     # ### Alternatives (Threads/Ractors)
     # Threads and Ractors are not used for parallelism *yet*. Shifty's current
     # goal is an easy-to-use framework for sequential data pipelines, and a
     # single-threaded Fiber model serves that directly without the overhead of
     # mutexes (Threads) or the sharing restrictions of Ractors. This is a
-    # scoping decision, not a rejection: the planned move to deeply frozen,
-    # shareable handoff values is deliberately Ractor-compatible and lays the
-    # groundwork for a future Ractor-backed worker type. (Fibers cannot cross
-    # Ractor boundaries, so such a worker would be a distinct type, not a
+    # scoping decision, not a rejection: the default :frozen policy's deeply
+    # frozen, shareable handoff values are deliberately Ractor-compatible and
+    # lay the groundwork for a future Ractor-backed worker type. (Fibers cannot
+    # cross Ractor boundaries, so such a worker would be a distinct type, not a
     # retrofit of this one.)
     #
     # ### Thread Safety
