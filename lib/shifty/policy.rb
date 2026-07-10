@@ -5,14 +5,36 @@ module Shifty
   module PolicyDeclarable
     def with_policy(policy_name)
       policy_name = Policy.validate!(policy_name)
+      each_upstream_node { |node| node.pipeline_policy = policy_name }
+      self
+    end
+
+    # Locks the assembled topology: "the pipeline you composed is the
+    # pipeline that runs" becomes a guarantee. Rewiring (supply=, Gang
+    # append/roster mutation) raises FrozenError afterward. Worker
+    # closure/context state stays mutable — only the topology freezes.
+    #
+    # Call this on the pipeline's TAIL: like with_policy, it walks the
+    # supply chain upstream, so freezing a mid-chain node leaves
+    # everything downstream of it mutable. And use this, not the bare
+    # Object#freeze — freeze! first materializes each node's lazy task
+    # and Fiber; a bare freeze skips that and the first shift would
+    # raise FrozenError from deep inside the worker.
+    def freeze!
+      each_upstream_node { |node| node.freeze_topology_node! }
+      self
+    end
+
+    private
+
+    def each_upstream_node
       node = self
       seen = {}.compare_by_identity
       while node.respond_to?(:pipeline_policy=) && !seen[node]
         seen[node] = true
-        node.pipeline_policy = policy_name
+        yield node
         node = node.supply
       end
-      self
     end
   end
 
