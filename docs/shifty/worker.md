@@ -1,3 +1,7 @@
+> This page covers the raw `Shifty::Worker` API. The
+> [wiki's Worker-Types page](https://github.com/joelhelbling/shifty/wiki/Worker-Types)
+> covers every DSL worker and their handoff-policy behavior.
+
 # Shifty::Worker
 
 _The workhorse of the Shifty framework._
@@ -31,25 +35,10 @@ relay_worker = Shifty::Worker.new(task: capitalizer, supply: source_worker)
 relay_worker.shift #=> 'Hulk'
 ```
 
-A worker also has an accessor for its @task:
-
-```ruby
-doofusizer = Proc.new { |name| name.gsub(/u/, 'oo') }
-relay_worker.task = doofusizer
-
-relay_worker.shift #=> 'hoolk'
-```
-
-And finally, you can provide a task by directly overriding the
-worker's #task instance method:
-
-```ruby
-def relay_worker.task(name)
-  name.to_sym
-end
-
-relay_worker.shift #=> :hulk
-```
+A worker's task is fixed at construction — there is no `task=`
+accessor. (And as of 0.6.0, `#freeze!` can lock the rest of the
+topology down too, so the pipeline you composed is the pipeline
+that runs.)
 
 Even workers without a task have a task; all workers actually come
 with a default task which simply passes on the received value unchanged:

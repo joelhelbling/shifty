@@ -1,7 +1,31 @@
-**Status:** Planning
-**Target:** Next major version (breaking change)
+**Status:** Implemented in 0.6.0 (see [feature-implementation-plan.md](feature-implementation-plan.md))
+**Target:** 0.6.0 (pre-1.0 minor carrying the breaking change)
 **Author:** Joel Helbling
 **Last updated:** 2026-07-10
+
+> **Post-implementation corrections.** Empirical spikes during Phase 1
+> falsified three mechanism claims below; the shipped code follows the
+> corrected behavior (design intent unchanged):
+>
+> 1. **§3.2/§10.1:** `:isolated` uses a **Marshal round-trip**, not
+>    `Ractor.make_shareable(copy: true)` — the latter returns a *frozen*
+>    copy and cannot provide the mutable scratch copy the contract
+>    promises. Consequently `:hardened` → `:isolated` preserves the exact
+>    mechanism as well as the semantics.
+> 2. **§3.3/§10.1:** `make_shareable` does **not** reject IO handles or
+>    singleton-methoded objects — it silently freezes a live IO *in
+>    place*, process-wide (and `copy: true` leaks a file descriptor). The
+>    implementation therefore detects top-level IO proactively and raises
+>    `UnshareableValue` before calling `make_shareable`. Only Proc and
+>    `Enumerator::Lazy` (and StringIO) are rejected naturally.
+> 3. **§5.3/§11.4:** `PolicyConflict` was dropped entirely — with worker
+>    declarations authoritative and pipeline policy default-only, no
+>    violable composition rule exists. Reopen alongside a "strict Gang".
+>
+> Also: §5.4's `Worker#task=` never existed; `#freeze!`'s motivation is
+> `supply=`/Roster rewiring. §8.2's amortization claim was validated by
+> benchmarks (`benchmark/RESULTS.md`): steady-state `:frozen` ≈ 71ns per
+> handoff, independent of value size.
 ---
 
 # Handoff Immutability Policies

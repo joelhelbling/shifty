@@ -42,15 +42,17 @@ Here are a few conceptual examples of how Shifty could be applied:
 ## A Note on Values Passed Between Workers
 
 The examples above pass data from one worker to the next. Because Shifty runs
-each value through every worker before starting the next value, workers should
+each value through every worker before starting the next value, workers must
 treat a handed-off value as read-only and express changes as new values
 (`arr + [x]`, `hash.merge(...)`, `value.with(...)`) rather than mutating in
-place (`arr <<`, `hash[k] =`, `map!`). This keeps failures local and is the
-direction Shifty is moving: a planned release makes deeply frozen handoffs the
-default, with opt-in policies for workers that genuinely need a private scratch
-copy or a shared mutable reference. See
-[handoff immutability policies](planning/handoff-immutability-policies.md) for
-the full design and migration guidance.
+place (`arr <<`, `hash[k] =`, `map!`). As of 0.6.0 this is enforced: values
+are deeply frozen at every handoff by default, and a task that mutates its
+input raises `Shifty::PolicyViolation` at the offending worker. Workers that
+genuinely need a private scratch copy can declare `policy: :isolated`; workers
+that need a shared mutable reference can declare `policy: :shared`. See the
+wiki's [Handoff Policies](https://github.com/joelhelbling/shifty/wiki/Handoff-Policies)
+and [Coding Idioms Under :frozen](https://github.com/joelhelbling/shifty/wiki/Coding-Idioms-Under-Frozen)
+pages, and the [Migration Guide](https://github.com/joelhelbling/shifty/wiki/Migration-Guide-0.6).
 
 ## Conclusion
 
