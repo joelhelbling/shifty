@@ -17,3 +17,8 @@ Gemfile.lock
 
 shifty-*.gem
 .secrets
+
+# Agent files
+AGENT.md
+CLAUDE.md
+.claude/settings.local.yaml
