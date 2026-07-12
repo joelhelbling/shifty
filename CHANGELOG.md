@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Deprecations
+
+- **`supply` is renamed to `supplier`** on `Worker` and `Gang` (issue #22):
+  `#supply`/`#supply=` and the `supply:` constructor option are deprecated in
+  favor of `#supplier`/`#supplier=` and `supplier:`. "Supply" reads as both a
+  noun and a verb (`#supplies` is the verb, two lines away); "supplier" can
+  only be the noun. The old names still work but emit a deprecation warning,
+  and will be removed in 1.0.0. `Policy::Supply` is likewise renamed to
+  `Policy::Supplier` (the old constant is deprecated). Error messages and
+  documentation now say "supplier" throughout.
+
 ## 0.6.0
 
 The handoff immutability release. Values crossing worker boundaries are now

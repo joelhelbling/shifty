@@ -17,7 +17,7 @@ module Shifty
 
     def push(worker)
       if worker
-        worker.supply = workers.last unless workers.empty?
+        worker.supplier = workers.last unless workers.empty?
         workers << worker
       end
     end
@@ -25,18 +25,18 @@ module Shifty
 
     def pop
       workers.pop.tap do |popped|
-        popped.supply = nil
+        popped.supplier = nil
       end
     end
 
     def shift
       workers.shift.tap do
-        workers.first.supply = nil
+        workers.first.supplier = nil
       end
     end
 
     def unshift(worker)
-      workers.first.supply = worker
+      workers.first.supplier = worker
       workers.unshift worker
     end
   end

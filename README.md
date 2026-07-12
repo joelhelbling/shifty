@@ -158,7 +158,7 @@ which to operate:
 ```ruby
 source = source_worker (0..3)
 
-squarer.supply = source
+squarer.supplier = source
 ```
 
 Or, if you prefer, the DSL provides a vertical pipe for linking the
@@ -329,7 +329,7 @@ pipeline.shift #=> nil
 
 ### Splitter Worker
 
-The splitter worker accepts a value from its supply, and generates an array
+The splitter worker accepts a value from its supplier, and generates an array
 and then successively returns each element of the array.  Once the array
 has been expended, the splitter worker appeals to its supplier for another
 value and the process repeats.

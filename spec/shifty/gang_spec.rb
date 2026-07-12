@@ -12,7 +12,7 @@ module Shifty
       Then do
         expect(subject).to respond_to(
           :ready_to_work?, :shift,
-          :supply, :supply=,
+          :supplier, :supplier=,
           :supplies, :"|" # rubocop:disable Lint/SymbolConversion
         )
       end
@@ -42,7 +42,7 @@ module Shifty
         context "supplied to the gang" do
           Given(:workers) { [b_appender, c_appender] }
 
-          When { gang.supply = source }
+          When { gang.supplier = source }
 
           Then { expect(gang).to be_ready_to_work }
         end

@@ -21,7 +21,7 @@ module Shifty
       When { roster.push tilda_er }
 
       Then { roster.last == tilda_er }
-      And  { roster.last.supply == plusser }
+      And  { roster.last.supplier == plusser }
     end
 
     describe "#pop" do
@@ -51,14 +51,14 @@ module Shifty
 
         Then { roster.workers == [source, plusser, tilda_er] }
         Then { expect(plusser).to be_ready_to_work }
-        Then { plusser.supply == source }
+        Then { plusser.supplier == source }
       end
 
       context "when first worker is a source" do
         Given(:new_source) { source_worker((:z..:a).map(&:to_s)) }
         Given(:workers) { [source, plusser, tilda_er] }
 
-        Then { expect { roster.unshift new_source }.to raise_error(/cannot accept a supply/) }
+        Then { expect { roster.unshift new_source }.to raise_error(/cannot accept a supplier/) }
       end
     end
   end

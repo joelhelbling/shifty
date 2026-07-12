@@ -229,7 +229,7 @@ module Shifty
     end
 
     describe "boundary cases" do
-      context "values pulled mid-task via supply.shift are governed (filter_worker)" do
+      context "values pulled mid-task via supplier.shift are governed (filter_worker)" do
         Given(:source) { source_worker [[1], [2], [3]] }
         Given(:filter) { filter_worker { |v| v << :seen } }
         Given(:pipeline) { source | filter }
@@ -361,7 +361,7 @@ module Shifty
       context "criteria-bypassed values are still governed at the gang boundary" do
         Given(:inner) { Worker.new { |v| v } }
         Given(:gang) { Gang.new([inner], criteria: ->(g) { false }) }
-        Given { gang.supply = mutable_source }
+        Given { gang.supplier = mutable_source }
 
         When(:result) { gang.shift }
 

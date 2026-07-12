@@ -1,11 +1,11 @@
 module Shifty
   RSpec.describe Worker do
     context "#respond_to?" do
-      Then { expect(subject).to respond_to(:shift, :supply, :supply=, :"|") } # rubocop:disable Lint/SymbolConversion
+      Then { expect(subject).to respond_to(:shift, :supplier, :supplier=, :"|") } # rubocop:disable Lint/SymbolConversion
     end
 
     describe "readiness" do
-      context "with no supply" do
+      context "with no supplier" do
         context "with no task" do
           Given(:worker) { Worker.new }
           Then { expect(worker).to_not be_ready_to_work }
@@ -22,11 +22,11 @@ module Shifty
         end
       end
 
-      context "with a supply" do
+      context "with a supplier" do
         context "when the task accepts a value" do
           Given(:supplier) { Worker.new { "foofoo" } }
           Given(:worker) { Worker.new { |value| value.upcase } }
-          Given { worker.supply = supplier }
+          Given { worker.supplier = supplier }
 
           Then { expect(worker).to be_ready_to_work }
         end
@@ -50,10 +50,10 @@ module Shifty
       end
 
       context "However, when a worker's task accepts an argument," do
-        context "but the worker has no supply," do
+        context "but the worker has no supplier," do
           Given(:worker) { Worker.new { |value| value.do_whatnot } }
 
-          Then { expect { subject.shift }.to raise_error(/has no supply/) }
+          Then { expect { subject.shift }.to raise_error(/has no supplier/) }
         end
       end
     end
@@ -70,11 +70,11 @@ module Shifty
       end
     end
 
-    describe "#supply=" do
+    describe "#supplier=" do
       context "source worker" do
         Given(:source1) { Worker.new { :foo } }
         Given(:source2) { Worker.new { :bar } }
-        Then { expect { source1.supply = source2 }.to raise_error(/cannot accept a supply/) }
+        Then { expect { source1.supplier = source2 }.to raise_error(/cannot accept a supplier/) }
       end
     end
 
@@ -84,7 +84,7 @@ module Shifty
 
       When(:pipeline) { source_worker | subscribing_worker }
 
-      Then { subscribing_worker.supply == source_worker }
+      Then { subscribing_worker.supplier == source_worker }
       Then { pipeline.shift == :foo_bar }
       Then { pipeline == subscribing_worker }
     end
@@ -92,8 +92,8 @@ module Shifty
     describe "#shift" do
       Given(:worker) { Worker.new { |v| v } }
       Given(:work_product) { :whatever }
-      Given(:supply) { double shift: work_product }
-      Given { worker.supply = supply }
+      Given(:supplier) { double shift: work_product }
+      Given { worker.supplier = supplier }
 
       context "resumes a fiber" do
         Given(:fake_fiber) { double }
@@ -105,9 +105,9 @@ module Shifty
       end
     end
 
-    describe "worker receives a |supply|" do
+    describe "worker receives a |supplier|" do
       Given(:source_worker) { Worker.new { :foo } }
-      Given(:worker) { Worker.new { |value, supply| [value, supply.shift] } }
+      Given(:worker) { Worker.new { |value, supplier| [value, supplier.shift] } }
 
       When(:pipeline) { source_worker | worker }
 
@@ -228,7 +228,7 @@ module Shifty
       When(:pipeline) { source_worker | worker }
 
       context "default context" do
-        Given(:worker) { Worker.new { |value, supply, context| context } }
+        Given(:worker) { Worker.new { |value, supplier, context| context } }
         When(:context) { pipeline.shift }
 
         context "persists from one shift to the next" do
@@ -252,7 +252,7 @@ module Shifty
         context "can be used for configuration" do
           Given(:context) { OpenStruct.new({foo: "bar"}) }
           Given(:worker) do
-            Worker.new(context: context) do |value, supply, context|
+            Worker.new(context: context) do |value, supplier, context|
               value && :"#{context.foo}_#{value}"
             end
           end

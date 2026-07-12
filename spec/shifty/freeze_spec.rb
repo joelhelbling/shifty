@@ -22,7 +22,7 @@ module Shifty
       context "rewiring the frozen tail raises" do
         Given { pipeline.freeze! }
         Given(:interloper) { source_worker [:x] }
-        Then { expect { pipeline.supply = interloper }.to raise_error(FrozenError) }
+        Then { expect { pipeline.supplier = interloper }.to raise_error(FrozenError) }
       end
 
       context "the walk freezes upstream workers too" do
@@ -32,7 +32,7 @@ module Shifty
       end
 
       context "a worker relying on the lazy default task still runs after freeze!" do
-        Given(:passthrough) { Worker.new(supply: source_worker([:a])) }
+        Given(:passthrough) { Worker.new(supplier: source_worker([:a])) }
         Given(:frozen_pipeline) { passthrough.freeze! }
         Then { frozen_pipeline.shift == :a }
       end
