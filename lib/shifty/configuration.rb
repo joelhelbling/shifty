@@ -23,5 +23,10 @@ module Shifty
     def reset_configuration!
       @config = Configuration.new
     end
+
+    def deprecation_warning(old_name, new_name)
+      warn "[shifty] #{old_name} is deprecated and will be " \
+           "removed in 1.0.0; use #{new_name} instead."
+    end
   end
 end

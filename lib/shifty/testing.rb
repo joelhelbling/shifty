@@ -13,7 +13,7 @@ module Shifty
       # production; pass policy: to override it for policy-matrix tests.
       def run(worker, inputs:, policy: nil, max_shifts: 10_000)
         harness(worker, policy) do |subject|
-          subject.supply = source_for(inputs)
+          subject.supplier = source_for(inputs)
           outputs = []
           shifts = 0
           until (value = subject.shift).nil?
@@ -42,7 +42,7 @@ module Shifty
         end
         baseline = Marshal.dump(copy)
         harness(worker, :shared) do |subject|
-          subject.supply = source_for([copy])
+          subject.supplier = source_for([copy])
           subject.shift
         end
         Marshal.dump(copy) != baseline
@@ -52,21 +52,21 @@ module Shifty
 
       # Temporarily rewires the caller's actual worker (a dup would defeat
       # task closures that reference their own worker, e.g. side_worker's
-      # policy check) and restores its policy, supply, and Fiber afterward,
+      # policy check) and restores its policy, supplier, and Fiber afterward,
       # so the harness never leaves a mark on the worker under test.
       def harness(worker, policy)
         saved = {
           policy: worker.instance_variable_get(:@policy),
-          supply: worker.instance_variable_get(:@supply),
+          supplier: worker.instance_variable_get(:@supplier),
           fiber: worker.instance_variable_get(:@my_little_machine)
         }
         worker.instance_variable_set(:@policy, Policy.validate!(policy)) if policy
         worker.instance_variable_set(:@my_little_machine, nil)
-        worker.instance_variable_set(:@supply, nil)
+        worker.instance_variable_set(:@supplier, nil)
         yield worker
       ensure
         worker.instance_variable_set(:@policy, saved[:policy])
-        worker.instance_variable_set(:@supply, saved[:supply])
+        worker.instance_variable_set(:@supplier, saved[:supplier])
         worker.instance_variable_set(:@my_little_machine, saved[:fiber])
       end
 

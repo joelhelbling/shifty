@@ -9,14 +9,17 @@ module Shifty
   # pipelines, where each worker performs a specific task and passes
   # its output to the next worker in the chain.
   class Worker
-    attr_reader :supply, :tags, :name
+    attr_reader :supplier, :tags, :name
     attr_accessor :pipeline_policy
 
     include Shifty::Taggable
     include Shifty::PolicyDeclarable
 
     def initialize(p = {}, &block)
-      @supply       = p[:supply]
+      if p.key?(:supply)
+        Shifty.deprecation_warning("the supply: option", "supplier:")
+      end
+      @supplier     = p[:supplier] || p[:supply]
       @task         = block || p[:task]
       @context      = p[:context] || OpenStruct.new
       @policy       = Policy.validate!(p[:policy]) if p[:policy]
@@ -30,8 +33,8 @@ module Shifty
     end
 
     # Applies this worker's effective policy to a value crossing its
-    # boundary. Public because Policy::Supply routes a task's own
-    # supply.shift calls back through it.
+    # boundary. Public because Policy::Supplier routes a task's own
+    # supplier.shift calls back through it.
     def intake(value)
       Policy.resolve(effective_policy).call(value, worker: self)
     end
@@ -59,18 +62,28 @@ module Shifty
     end
 
     def ready_to_work?
-      @task && (supply || !task_accepts_a_value?)
+      @task && (supplier || !task_accepts_a_value?)
     end
 
     def supplies(subscribing_worker)
-      subscribing_worker.supply = self
+      subscribing_worker.supplier = self
       subscribing_worker
     end
     alias_method :|, :supplies
 
+    def supplier=(supplier)
+      raise WorkerError.new("Worker is a source, and cannot accept a supplier") unless suppliable?
+      @supplier = supplier
+    end
+
+    def supply
+      Shifty.deprecation_warning("Worker#supply", "Worker#supplier")
+      supplier
+    end
+
     def supply=(supplier)
-      raise WorkerError.new("Worker is a source, and cannot accept a supply") unless suppliable?
-      @supply = supplier
+      Shifty.deprecation_warning("Worker#supply=", "Worker#supplier=")
+      self.supplier = supplier
     end
 
     def suppliable?
@@ -83,7 +96,7 @@ module Shifty
       @task ||= default_task
 
       unless ready_to_work?
-        raise "This worker's task expects to receive a value from a supplier, but has no supply."
+        raise "This worker's task expects to receive a value from a supplier, but has no supplier."
       end
     end
 
@@ -97,7 +110,7 @@ module Shifty
       # crosses regardless of how many times an upstream task yielded.
       @my_little_machine ||= Fiber.new {
         loop do
-          value = intake(supply&.shift)
+          value = intake(supplier&.shift)
           if criteria_passes?
             Fiber.yield perform_task(value)
           else
@@ -108,7 +121,7 @@ module Shifty
     end
 
     def perform_task(value)
-      @task.call(value, policy_supply, @context)
+      @task.call(value, policy_supplier, @context)
     rescue FrozenError => e
       raise PolicyViolation.new(
         worker: self,
@@ -119,8 +132,8 @@ module Shifty
       )
     end
 
-    def policy_supply
-      supply && Policy::Supply.new(supply, self)
+    def policy_supplier
+      supplier && Policy::Supplier.new(supplier, self)
     end
 
     def default_task

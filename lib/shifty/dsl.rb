@@ -55,9 +55,9 @@ module Shifty
       options[:tags] << :filter
       ensure_callable!(block)
 
-      Worker.new(options) do |value, supply|
+      Worker.new(options) do |value, supplier|
         while value && !block.call(value)
-          value = supply.shift
+          value = supplier.shift
         end
         value
       end
@@ -81,14 +81,14 @@ module Shifty
 
       options[:context] = BatchContext.new({batch_full: batch_full})
 
-      Worker.new(options) do |value, supply, context|
+      Worker.new(options) do |value, supplier, context|
         if value
           context.collection = [value]
           until context.batch_complete?(
             context.collection.last,
             context.collection
           )
-            context.collection << supply.shift
+            context.collection << supplier.shift
           end
           context.collection.compact
         end
@@ -117,14 +117,14 @@ module Shifty
     def trailing_worker(trail_length = 2)
       options = {tags: [:trailing]}
       trail = []
-      Worker.new(options) do |value, supply|
+      Worker.new(options) do |value, supplier|
         if value
           trail.unshift value
           if trail.size >= trail_length
             trail.pop
           end
           while trail.size < trail_length
-            trail.unshift supply.shift
+            trail.unshift supplier.shift
           end
 
           # Hand off a snapshot: the builder keeps mutating `trail` across

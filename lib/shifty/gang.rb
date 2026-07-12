@@ -30,7 +30,7 @@ module Shifty
         # Even when the gang's criteria bypasses its workers, the value
         # still crosses the gang's boundary — govern it with the entry
         # worker's policy, matching Worker#shift's bypass behavior.
-        roster.first.intake(roster.first.supply.shift)
+        roster.first.intake(roster.first.supplier.shift)
       end
     end
 
@@ -38,16 +38,26 @@ module Shifty
       roster.first.ready_to_work?
     end
 
+    def supplier
+      roster.first&.supplier
+    end
+
+    def supplier=(supplier)
+      roster.first.supplier = supplier
+    end
+
     def supply
-      roster.first&.supply
+      Shifty.deprecation_warning("Gang#supply", "Gang#supplier")
+      supplier
     end
 
     def supply=(supplier)
-      roster.first.supply = supplier
+      Shifty.deprecation_warning("Gang#supply=", "Gang#supplier=")
+      self.supplier = supplier
     end
 
     def supplies(subscribing_worker)
-      subscribing_worker.supply = self
+      subscribing_worker.supplier = self
       subscribing_worker
     end
     alias_method :|, :supplies

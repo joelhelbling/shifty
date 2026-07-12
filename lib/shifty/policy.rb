@@ -1,6 +1,6 @@
 module Shifty
   # Shared by Worker and Gang: declares a pipeline-level policy default on
-  # every node reachable upstream through the supply chain. A worker's own
+  # every node reachable upstream through the supplier chain. A worker's own
   # policy declaration (its contract) always wins over the pipeline default.
   module PolicyDeclarable
     def with_policy(policy_name)
@@ -10,12 +10,12 @@ module Shifty
     end
 
     # Locks the assembled topology: "the pipeline you composed is the
-    # pipeline that runs" becomes a guarantee. Rewiring (supply=, Gang
+    # pipeline that runs" becomes a guarantee. Rewiring (supplier=, Gang
     # append/roster mutation) raises FrozenError afterward. Worker
     # closure/context state stays mutable — only the topology freezes.
     #
     # Call this on the pipeline's TAIL: like with_policy, it walks the
-    # supply chain upstream, so freezing a mid-chain node leaves
+    # supplier chain upstream, so freezing a mid-chain node leaves
     # everything downstream of it mutable. And use this, not the bare
     # Object#freeze — freeze! first materializes each node's lazy task
     # and Fiber; a bare freeze skips that and the first shift would
@@ -33,7 +33,7 @@ module Shifty
       while node.respond_to?(:pipeline_policy=) && !seen[node]
         seen[node] = true
         yield node
-        node = node.supply
+        node = node.supplier
       end
     end
   end
@@ -107,18 +107,21 @@ module Shifty
       end
     end
 
-    # Wraps a worker's supply so that values the task pulls directly
-    # (e.g. filter/batch/trailing workers calling supply.shift mid-task)
+    # Wraps a worker's supplier so that values the task pulls directly
+    # (e.g. filter/batch/trailing workers calling supplier.shift mid-task)
     # cross the boundary under the same policy as the primary intake.
-    class Supply
-      def initialize(supply, worker)
-        @supply = supply
+    class Supplier
+      def initialize(supplier, worker)
+        @supplier = supplier
         @worker = worker
       end
 
       def shift
-        @worker.intake(@supply.shift)
+        @worker.intake(@supplier.shift)
       end
     end
+
+    Supply = Supplier
+    deprecate_constant :Supply
   end
 end
