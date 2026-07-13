@@ -96,7 +96,7 @@ module Shifty
       @task ||= default_task
 
       unless ready_to_work?
-        raise "This worker's task expects to receive a value from a supplier, but has no supplier."
+        raise WorkerError.new("This worker's task expects to receive a value from a supplier, but has no supplier.")
       end
     end
 

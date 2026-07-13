@@ -290,7 +290,9 @@ module Shifty
       context "side_worker mode: :hardened behaves as :isolated and warns" do
         Given(:warning) do
           capture_stderr do
-            @worker = side_worker(mode: :hardened, &unsafe_task)
+            with_deprecation_warnings do
+              @worker = side_worker(mode: :hardened, &unsafe_task)
+            end
           end
         end
         Given(:pipeline) { source | @worker }
@@ -303,7 +305,9 @@ module Shifty
       context "Worker policy: :hardened maps to :isolated and warns" do
         Given(:warning) do
           capture_stderr do
-            @worker = Worker.new(policy: :hardened) { |v| v }
+            with_deprecation_warnings do
+              @worker = Worker.new(policy: :hardened) { |v| v }
+            end
           end
         end
 
@@ -405,7 +409,9 @@ module Shifty
     describe "deprecated mode: values other than :hardened warn and are ignored" do
       Given(:warning) do
         capture_stderr do
-          @worker = side_worker(mode: :normal) { |v| v }
+          with_deprecation_warnings do
+            @worker = side_worker(mode: :normal) { |v| v }
+          end
         end
       end
 

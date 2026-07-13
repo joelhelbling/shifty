@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Changes
+
+- **Deprecation warnings now use Ruby's `:deprecated` warning category.**
+  All of Shifty's deprecation warnings (the `supply` → `supplier` rename,
+  policy `:hardened`, side_worker's `mode:` option) are emitted via
+  `Kernel#warn(..., category: :deprecated)`, so they are silent by default
+  and controlled the standard way: `Warning[:deprecated] = true`,
+  `-W:deprecated`, or `-w`.
+- **An unready worker now raises `Shifty::WorkerError`** ("...has no
+  supplier") instead of a bare `RuntimeError`, matching the error raised
+  when assigning a supplier to a source worker.
+
 ### Deprecations
 
 - **`supply` is renamed to `supplier`** on `Worker` and `Gang` (issue #22):

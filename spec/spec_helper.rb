@@ -18,6 +18,16 @@ module StderrCapture
   ensure
     $stderr = original
   end
+
+  # Shifty's deprecation warnings are emitted under Ruby's :deprecated
+  # warning category, which is disabled by default; toggle it to observe.
+  def with_deprecation_warnings(enabled: true)
+    original = Warning[:deprecated]
+    Warning[:deprecated] = enabled
+    yield
+  ensure
+    Warning[:deprecated] = original
+  end
 end
 
 RSpec.configure do |config|
