@@ -21,24 +21,34 @@ module Shifty
       end
 
       describe "unready worker error message names the supplier" do
-        Then { expect { relay.shift }.to raise_error(/has no supplier/) }
+        Then { expect { relay.shift }.to raise_error(WorkerError, /has no supplier/) }
+      end
+
+      describe "deprecation warnings honor Warning[:deprecated]" do
+        When(:warning) do
+          capture_stderr do
+            with_deprecation_warnings(enabled: false) { relay.supply = source }
+          end
+        end
+        Then { warning.empty? }
+        And  { relay.supplier == source }
       end
 
       describe "deprecated #supply reader" do
         Given { relay.supplier = source }
-        When(:warning) { capture_stderr { @result = relay.supply } }
+        When(:warning) { capture_stderr { with_deprecation_warnings { @result = relay.supply } } }
         Then { @result == source }
         And  { warning.match?(/\[shifty\].*#supply is deprecated.*#supplier/m) }
       end
 
       describe "deprecated #supply= writer" do
-        When(:warning) { capture_stderr { relay.supply = source } }
+        When(:warning) { capture_stderr { with_deprecation_warnings { relay.supply = source } } }
         Then { relay.supplier == source }
         And  { warning.match?(/\[shifty\].*#supply= is deprecated.*#supplier=/m) }
       end
 
       describe "deprecated supply: constructor option" do
-        When(:warning) { capture_stderr { @worker = Worker.new(supply: source) { |value| value } } }
+        When(:warning) { capture_stderr { with_deprecation_warnings { @worker = Worker.new(supply: source) { |value| value } } } }
         Then { @worker.supplier == source }
         And  { warning.match?(/\[shifty\].*supply:.*deprecated.*supplier:/m) }
       end
@@ -55,13 +65,13 @@ module Shifty
 
       describe "deprecated #supply reader" do
         Given { gang.supplier = source }
-        When(:warning) { capture_stderr { @result = gang.supply } }
+        When(:warning) { capture_stderr { with_deprecation_warnings { @result = gang.supply } } }
         Then { @result == source }
         And  { warning.match?(/\[shifty\].*#supply is deprecated.*#supplier/m) }
       end
 
       describe "deprecated #supply= writer" do
-        When(:warning) { capture_stderr { gang.supply = source } }
+        When(:warning) { capture_stderr { with_deprecation_warnings { gang.supply = source } } }
         Then { gang.supplier == source }
         And  { warning.match?(/\[shifty\].*#supply= is deprecated.*#supplier=/m) }
       end

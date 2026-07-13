@@ -147,12 +147,12 @@ module Shifty
       return unless options.key?(:mode)
       mode = options.delete(:mode)
       if mode == :hardened
-        warn "[shifty] side_worker mode: :hardened is deprecated and will be " \
-             "removed in 1.0.0; use policy: :isolated instead."
+        Shifty.deprecation_warning("side_worker mode: :hardened", "policy: :isolated")
         options[:policy] ||= :isolated
       else
         warn "[shifty] side_worker's mode: option is deprecated and ignored " \
-             "(received mode: #{mode.inspect}); declare a policy: instead."
+             "(received mode: #{mode.inspect}); declare a policy: instead.",
+          category: :deprecated
       end
     end
 

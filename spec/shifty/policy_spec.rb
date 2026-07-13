@@ -37,7 +37,7 @@ module Shifty
 
       context "maps deprecated :hardened to :isolated with a warning" do
         Given(:warning) do
-          capture_stderr { @resolved = Policy.resolve(:hardened) }
+          capture_stderr { with_deprecation_warnings { @resolved = Policy.resolve(:hardened) } }
         end
         Then { expect(warning).to match(/:hardened is deprecated.*:isolated/m) }
         And { expect(warning).to match(/removed in 1\.0\.0/) }

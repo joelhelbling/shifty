@@ -88,8 +88,7 @@ module Shifty
       def canonical(name)
         if ALIASES.key?(name)
           replacement = ALIASES[name]
-          warn "[shifty] policy :#{name} is deprecated and will be " \
-               "removed in 1.0.0; use :#{replacement} instead."
+          Shifty.deprecation_warning("policy :#{name}", ":#{replacement}")
           replacement
         else
           name

@@ -24,9 +24,12 @@ module Shifty
       @config = Configuration.new
     end
 
+    # Emitted under the :deprecated category so users control visibility
+    # the standard way (Warning[:deprecated] = true, -W:deprecated, or -w).
     def deprecation_warning(old_name, new_name)
       warn "[shifty] #{old_name} is deprecated and will be " \
-           "removed in 1.0.0; use #{new_name} instead."
+           "removed in 1.0.0; use #{new_name} instead.",
+        category: :deprecated
     end
   end
 end
